@@ -23,9 +23,10 @@ public class AppletMain extends Applet implements Runnable {
     Thread mainThread, playerThread, visualizerThread, mixerThread;
     FrameRegulator frameReg;
     private String filepath = "nara_16.wav";
+//    private String filepath = "truth_be_known_16.wav";
 
     public void init() {
-        setSize(1323, 800);
+        setSize(1000, 800);
         setBackground(Color.BLACK);
         setForeground(Color.WHITE);
 
@@ -110,13 +111,9 @@ public class AppletMain extends Applet implements Runnable {
                 double[] fftResults;
                 fftResults = visualizer.getFftResults();
 
-                if (fftResults != null) {
-                    backGraphics.setColor(Color.WHITE);
-                    for (int i = 0; i < fftResults.length; i++) {
-                        int magnitude = (int) (799 * fftResults[i]);
-                        backGraphics.drawLine(i, 799, i, 799 - magnitude);
-                    }
-                }
+//                createAllFrequencyVisual(fftResults);
+                createRangedBarsVisual(fftResults);
+                backBuffer.getWidth(this);
 
                 repaint();
                 System.out.println(System.currentTimeMillis() - start + " ms");
@@ -124,6 +121,55 @@ public class AppletMain extends Applet implements Runnable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    static double binHz = 1000.0 / 30; // 660 stop
+    static double[] ranges = { binHz, binHz * 2, binHz * 3, binHz * 4, binHz * 5, binHz * 6,
+            binHz * 8, binHz * 10, binHz * 12, binHz * 14, binHz * 16, binHz * 18, binHz * 20,
+            binHz * 23, binHz * 26, binHz * 29,
+            binHz * 33, binHz * 38, binHz * 44, binHz * 51,
+            binHz * 59, binHz * 68, binHz * 78, binHz * 89,
+            binHz * 101, binHz * 114, binHz * 128, binHz * 143,
+            binHz * 159, binHz * 177, binHz * 197, binHz * 219,
+            binHz * 244, binHz * 273, binHz * 307, binHz * 347,
+            binHz * 394, binHz * 449, binHz * 513, binHz * 587, binHz * 662 }; // 39 bands
+
+    private void createRangedBarsVisual(double[] fftResults) {
+        int rangeBins = ranges.length;
+        for (int i = 0; i < rangeBins; i++) {
+            ranges[i] += 0.01; // so we don't have to deal with rounding errors
+        }
+
+        double[] rangeMagnitudes = new double[rangeBins];
+
+        int rangeIndex = 0;
+        for (int i = 0; i < fftResults.length; i++) {
+            if ((i + 1) * binHz > ranges[rangeIndex]) {
+                if (rangeIndex < rangeBins - 1)
+                    rangeIndex++;
+                else
+                    break;
+            }
+
+            rangeMagnitudes[rangeIndex] += fftResults[i] / 41.4;
+        }
+
+        backGraphics.setColor(Color.WHITE);
+
+        for (int i = 0; i < rangeMagnitudes.length; i++) {
+            double magnitude = Math.sqrt(rangeMagnitudes[i]) * 500;
+            System.out.println(i + ": " + magnitude);
+            backGraphics.fillRect(i * 25, (int) (799 - magnitude), 25, (int) magnitude);
+        }
+    }
+
+    private void createAllFrequencyVisual(double[] fftResults) {
+        backGraphics.setColor(Color.WHITE);
+        for (int i = 0; i < fftResults.length; i++) {
+            double factor = Math.pow(2.5, 1.0 / (Math.sqrt(i / 1323.0) + 0.1)) / 5;
+            int magnitude = (int) (799 * fftResults[i] / factor);
+            backGraphics.drawLine(i, 799, i, 799 - magnitude);
         }
     }
 
