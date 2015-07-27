@@ -1,3 +1,7 @@
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+
 public class Utility {
 
     private static byte[] getBytes(double normalizedValue, int sampleSizeInBytes, boolean signed) {
@@ -87,6 +91,33 @@ public class Utility {
         }
 
         return byteArray;
+    }
+
+    public static double[] monoToStereo(double[] monoData) {
+        double[] stereoData = new double[monoData.length * 2];
+
+        for (int i = 0; i < monoData.length; i++) {
+            stereoData[i * 2] = monoData[i];
+            stereoData[i * 2 + 1] = monoData[i];
+        }
+
+        return stereoData;
+    }
+
+    public static void printArrayToFile(double[] array, String fileName) {
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter("C:\\Users\\Gary\\Desktop\\" + fileName, "UTF-8");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < array.length; i++) {
+            writer.println(array[i]);
+        }
+        writer.close();
     }
 
     private static void checkBytesPerDoubleArg(int bytesPerDouble) {

@@ -64,22 +64,35 @@ public class Mixer implements Runnable {
         }
     }
 
+    static boolean written = false;
+    static int counter = 5;
     public double[] transform(double[] input) {
         double[] paddedInput = getPaddedArray(input);
 
         Complex[] complexResults;
-        double[] tempConversion = new double[input.length];
+        double[] tempConversion = new double[input.length / 2];
+        double[] tempConversion2 = new double[paddedInput.length];
         try {
             complexResults = transformer.transform(paddedInput, TransformType.FORWARD);
+            System.out.println(complexResults.length);
 
             for (int i = 0; i < input.length / 2; i++) { // take first half of mirrored results
                 tempConversion[i] = complexResults[i + 1].abs(); // first bin is *noise*, offset by 1
+            }
+
+            for (int i = 0; i < paddedInput.length; i++) {
+                tempConversion2[i] = complexResults[i].abs();
             }
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
 
-//        Utility.printArrayToFile(tempConversion, "transformed.csv");
+        if (!written) {
+            if (counter-- == 0) {
+                Utility.printArrayToFile(tempConversion2, "transformed.csv");
+                written = true;
+            }
+        }
         return tempConversion;
     }
 
