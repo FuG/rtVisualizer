@@ -21,12 +21,13 @@ public class AppletMain extends Applet implements Runnable {
     Visualizer visualizer;
     Mixer mixer;
     Thread mainThread, playerThread, visualizerThread, mixerThread;
-    FrameRegulator dspFrameReg, graphicsFrameReg;
+    Thread frameRegThread;
+    FrameRegulator graphicsFrameReg;
 //    private String filepath = "nara_16.wav";
 //    private String filepath = "truth_be_known_16.wav";
 //    private String filepath = "gangnam_style_16.wav";
-//    private String filepath = "the_next_episode_16.wav";
-    private String filepath = "light_my_fire_16.wav";
+    private String filepath = "the_next_episode_16.wav";
+//    private String filepath = "light_my_fire_16.wav";
 
     public void init() {
         setSize(WIDTH, HEIGHT);
@@ -38,7 +39,6 @@ public class AppletMain extends Applet implements Runnable {
 
         initRenderHints(backGraphics);
 
-        dspFrameReg = new FrameRegulator(60.0); // 60.0 milliseconds b/w frames (16.6666667 FPS)
         graphicsFrameReg = new FrameRegulator(60); // 16.6666667 milliseconds b/w frames (60 FPS)
 
         try {
@@ -80,11 +80,13 @@ public class AppletMain extends Applet implements Runnable {
         }
         if (mixerThread == null) {
             mixerThread = new Thread(mixer);
-            mixerThread.start();
         }
         if (mainThread == null) {
             mainThread = new Thread(this);
             mainThread.start();
+        }
+        if (frameRegThread == null) {
+            frameRegThread = new Thread(graphicsFrameReg);
         }
     }
 
@@ -108,44 +110,93 @@ public class AppletMain extends Applet implements Runnable {
         getToolkit().sync();
     }
 
+    final static int SLEEP_NANOS = (int) (0.1 * 1000000); // (1/5 of a millisecond)
+    double[] barMagnitudes = null;
+
+    // TODO: separate the frame regulators and have separate thread write to graphics
     @Override
     public void run() {
-//        dspFrameReg.setDependentFrameReg(graphicsFrameReg);
-//        dspFrameReg.startRegulation();
-        dspFrameReg.start();
+        while (frameRegThread == null || mixerThread == null) {
+            try {
+                Thread.sleep(0, SLEEP_NANOS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        mixerThread.start();
+        frameRegThread.start();
 
+        boolean freshStart = true;
+        boolean interpolateFrame;
         while (true) {
             try {
-                long start = System.currentTimeMillis();
+                if (freshStart) {
+                    while (!visualizer.newResults) {
+                        Thread.sleep(0, SLEEP_NANOS);
+                    }
+                    freshStart = false;
+                }
+                graphicsFrameReg.waitForNextFrame();
+//                long start = System.currentTimeMillis();
                 setupBackBuffer();
-                mixer.processNext();
 
-                while (!visualizer.newResults) {
-                    Thread.sleep(5);
+                if (visualizer.newResults) {
+                    double[] fftResults  = visualizer.getFftResults();
+
+                    convertToRangeMagnitudes(fftResults);
+                    interpolateFrame = false;
+                } else {
+                    interpolateFrame = true;
                 }
 
-                double[] fftResults;
-                fftResults = visualizer.getFftResults();
+                drawGraphics(interpolateFrame);
 
-//                createAllFrequencyVisual(fftResults);
-                createRangedBarsVisual(fftResults);
-                backBuffer.getWidth(this);
-
+                backBuffer.getWidth(this); // not sure if necessary
                 repaint();
-//                System.out.println(System.currentTimeMillis() - startRegulation + " ms");
-                dspFrameReg.waitForNextFrame();
+//                System.out.println(System.currentTimeMillis() - start + " ms");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    static boolean needSetup = true;
+    private void drawGraphics(boolean interpolate) {
+        final double decreaseFactor = 0.9;
+
+        if (interpolate) {
+            for (int i = 0; i < barMagnitudes.length; i++) {
+                barMagnitudes[i] *= decreaseFactor;
+            }
+        }
+
+        // volume background
+        double volume = 0;
+
+        for (int i = 2; i < 10; i++) {
+            volume += barMagnitudes[i] / 8;
+        }
+//        System.out.println(volume);
+        volume = (Math.pow(2, volume / 4) - 1) * 255;
+        int gradientColor = 0;
+        Color gradient = new Color(gradientColor, gradientColor, gradientColor, (int) volume);
+        backGraphics.setColor(gradient);
+        backGraphics.fillRect(0, 0, getWidth(), getHeight());
+
+        // bars
+        backGraphics.setColor(Color.MAGENTA);
+
+        for (int i = 0; i < barMagnitudes.length; i++) {
+            double magnitude = Math.sqrt(barMagnitudes[i]) * 25 * 8;
+//            System.out.println(i + ": " + magnitude);
+            backGraphics.fillRect(i * 8 * 4, (int) (getHeight() - 1 - magnitude), 8 * 4 - 1, (int) magnitude);
+        }
+    }
+
     static double binHz = 44100 / 2 / 2048; // 10.767
-    static double[] ranges = null; // 14 bands
+    static double[] ranges = null; // 32 bands
 
     private static void setupRanges() {
-        if (needSetup) {
+        if (ranges == null) {
             int binCount = 32;
             ranges = new double[binCount];
             ranges[0] = 33.333333333333333;
@@ -153,14 +204,10 @@ public class AppletMain extends Applet implements Runnable {
             for (int i = 1; i < binCount; i++) {
                 ranges[i] = ranges[i - 1] * 1.221304;
             }
-
-            needSetup = false;
         }
     }
 
-    static double[] lastFFTResults = null;
-
-    private void createRangedBarsVisual(double[] fftResults) {
+    private void convertToRangeMagnitudes(double[] fftResults) {
         setupRanges();
 
         int rangeBins = ranges.length;
@@ -176,28 +223,29 @@ public class AppletMain extends Applet implements Runnable {
                 rangeMagnitudes[rangeIndex] += fftResults[i] / Math.sqrt(i);
             }
         }
+        barMagnitudes = rangeMagnitudes;
 
-        // volume background
-        double volume = 0;
-
-        for (int i = 2; i < 10; i++) {
-            volume += rangeMagnitudes[i] / 8;
-        }
-        System.out.println(volume);
-        volume = (Math.pow(2, volume / 4) - 1) * 255;
-        int gradientColor = 0;
-        Color gradient = new Color(gradientColor, gradientColor, gradientColor, (int) volume);
-        backGraphics.setColor(gradient);
-        backGraphics.fillRect(0, 0, getWidth(), getHeight());
-
-        // bars
-        backGraphics.setColor(Color.MAGENTA);
-
-        for (int i = 0; i < rangeMagnitudes.length; i++) {
-            double magnitude = Math.sqrt(rangeMagnitudes[i]) * 25 * 8;
-//            System.out.println(i + ": " + magnitude);
-            backGraphics.fillRect(i * 8 * 4, (int) (getHeight() - 1 - magnitude), 8 * 4 - 1, (int) magnitude);
-        }
+//        // volume background
+//        double volume = 0;
+//
+//        for (int i = 2; i < 10; i++) {
+//            volume += rangeMagnitudes[i] / 8;
+//        }
+//        System.out.println(volume);
+//        volume = (Math.pow(2, volume / 4) - 1) * 255;
+//        int gradientColor = 0;
+//        Color gradient = new Color(gradientColor, gradientColor, gradientColor, (int) volume);
+//        backGraphics.setColor(gradient);
+//        backGraphics.fillRect(0, 0, getWidth(), getHeight());
+//
+//        // bars
+//        backGraphics.setColor(Color.MAGENTA);
+//
+//        for (int i = 0; i < rangeMagnitudes.length; i++) {
+//            double magnitude = Math.sqrt(rangeMagnitudes[i]) * 25 * 8;
+////            System.out.println(i + ": " + magnitude);
+//            backGraphics.fillRect(i * 8 * 4, (int) (getHeight() - 1 - magnitude), 8 * 4 - 1, (int) magnitude);
+//        }
     }
 
     private void createAllFrequencyVisual(double[] fftResults) {

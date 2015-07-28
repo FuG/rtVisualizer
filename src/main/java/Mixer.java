@@ -19,7 +19,7 @@ public class Mixer implements Runnable {
     public boolean paused;
 
     public Mixer(Player player, Visualizer visualizer, AudioFile audioFile) throws IOException, UnsupportedAudioFileException {
-        frameRegulator = new FrameRegulator(10);
+        frameRegulator = new FrameRegulator(60.0); // 60ms b/w frames
         this.player = player;
         this.visualizer = visualizer;
         this.audioFile = audioFile;
@@ -49,7 +49,7 @@ public class Mixer implements Runnable {
                 double[] fftResults = transform(dspBuffer);
 
                 try {
-                    wait();
+                    frameRegulator.waitForNextFrame();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
