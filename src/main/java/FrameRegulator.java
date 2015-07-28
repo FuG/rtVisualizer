@@ -1,12 +1,7 @@
-import java.awt.Frame;
-
 public class FrameRegulator implements Runnable {
-
     private int desiredFPS;
-    private double millisBetweenFrames;
-    private long frameStartMillis;
-
-    int framesBeforeRealUpdate = 0;
+    public double millisBetweenFrames;
+    public volatile double nextFrameStartMillis;
 
     public FrameRegulator() {
         desiredFPS = 60;
@@ -22,32 +17,39 @@ public class FrameRegulator implements Runnable {
         this.millisBetweenFrames = millisBetweenFrames;
     }
 
-    public void start() {
-        frameStartMillis = System.currentTimeMillis();
+    public void init() {
+        nextFrameStartMillis = Utility.getCurrentMillis();
     }
 
-    public void waitForNextFrame() throws InterruptedException {
-        frameStartMillis += millisBetweenFrames;
-        long timeDelta = (long) (millisBetweenFrames - (System.currentTimeMillis() - frameStartMillis));
-
-        if (timeDelta > 0) {
-            Thread.sleep(timeDelta);
-        }
+    public synchronized void waitForNextFrame() throws InterruptedException {
+        sleep(millisTilNextFrame());
     }
 
     @Override
     public void run() {
+        init();
 
+        while (true) {
+            nextFrameStartMillis += millisBetweenFrames;
+
+            sleep(millisTilNextFrame());
+        }
     }
 
-//    public boolean hasNextUpdate() {
-//        boolean hasUpdate = false;
-//
-//        if (framesBeforeRealUpdate == 0) {
-//            hasUpdate = true;
-//            framesBeforeRealUpdate = Settings.FRAMES_BETWEEN_REAL_UPDATE;
-//        }
-//        framesBeforeRealUpdate--;
-//        return hasUpdate;
-//    }
+    private double millisTilNextFrame() {
+        return nextFrameStartMillis - Utility.getCurrentMillis();
+    }
+
+    private void sleep(double millisToSleep) {
+        if (millisToSleep > 0) {
+            long ms = (long) millisToSleep;
+            int ns = (int) ((millisToSleep - millisToSleep) * 1000000);
+
+            try {
+                Thread.sleep(ms, ns);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
