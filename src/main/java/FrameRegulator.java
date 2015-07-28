@@ -21,8 +21,10 @@ public class FrameRegulator implements Runnable {
         nextFrameStartMillis = Utility.getCurrentMillis();
     }
 
-    public synchronized void waitForNextFrame() throws InterruptedException {
-        sleep(millisTilNextFrame());
+    public synchronized double waitForNextFrame() throws InterruptedException {
+        double millisToSleep = millisTilNextFrame();
+        sleep(millisToSleep);
+        return millisToSleep;
     }
 
     @Override

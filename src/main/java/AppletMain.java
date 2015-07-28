@@ -130,15 +130,15 @@ public class AppletMain extends Applet implements Runnable {
         boolean interpolateFrame;
         while (true) {
             try {
+//                long start = System.currentTimeMillis();
+                setupBackBuffer();
                 if (freshStart) {
                     while (!visualizer.newResults) {
                         Thread.sleep(0, SLEEP_NANOS);
                     }
                     freshStart = false;
                 }
-                graphicsFrameReg.waitForNextFrame();
-//                long start = System.currentTimeMillis();
-                setupBackBuffer();
+//                graphicsFrameReg.waitForNextFrame();
 
                 if (visualizer.newResults) {
                     double[] fftResults  = visualizer.getFftResults();
@@ -154,6 +154,7 @@ public class AppletMain extends Applet implements Runnable {
                 backBuffer.getWidth(this); // not sure if necessary
                 repaint();
 //                System.out.println(System.currentTimeMillis() - start + " ms");
+                graphicsFrameReg.waitForNextFrame();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -161,7 +162,7 @@ public class AppletMain extends Applet implements Runnable {
     }
 
     private void drawGraphics(boolean interpolate) {
-        final double decreaseFactor = 0.9;
+        final double decreaseFactor = 1;
 
         if (interpolate) {
             for (int i = 0; i < barMagnitudes.length; i++) {

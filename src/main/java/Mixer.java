@@ -43,19 +43,24 @@ public class Mixer implements Runnable {
         double[] dspBuffer = new double[bufferSize];
         double[] playBuffer = new double[bufferSize * 2]; // to get stereo input
 
+        long lastStart = System.currentTimeMillis();
         for (int i = 0; i < leftBuffer.length; i++) {
             if (i % bufferSize == 0) {
                 byte[] finalPlayBuffer = Utility.doublesToBytes(playBuffer, 2, true);
                 double[] fftResults = transform(dspBuffer);
 
+                player.enqueue(finalPlayBuffer);
+                visualizer.process(fftResults);
+
+//                System.out.println(System.currentTimeMillis() - lastStart + " ms");
+                double waitTime = 0;
                 try {
-                    frameRegulator.waitForNextFrame();
+                    waitTime = frameRegulator.waitForNextFrame();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
-                visualizer.process(fftResults);
-                player.enqueue(finalPlayBuffer);
+                System.out.println("ms til next: " + waitTime); // TODO: FIX: ms til next: -2.110165790947961E9
+                lastStart = System.currentTimeMillis();
             }
             dspBuffer[i % bufferSize] = leftBuffer[i];
             int playBufferIndex = (i % bufferSize) * 2;
