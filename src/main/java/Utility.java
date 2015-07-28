@@ -125,4 +125,9 @@ public class Utility {
             throw new IllegalArgumentException("bytesPerDouble must be one of the following values: (1, 2, 3, 4)");
         }
     }
+
+
+    public static double getCurrentMillis() {
+        return System.nanoTime() / 1000000.0;
+    }
 }
