@@ -1,3 +1,4 @@
+import javax.rmi.CORBA.Util;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import java.applet.Applet;
 import java.awt.Color;
@@ -25,8 +26,8 @@ public class AppletMain extends Applet implements Runnable {
     FrameRegulator graphicsFrameReg;
 //    private String filepath = "nara_16.wav";
 //    private String filepath = "truth_be_known_16.wav";
-//    private String filepath = "gangnam_style_16.wav";
-    private String filepath = "the_next_episode_16.wav";
+    private String filepath = "gangnam_style_16.wav";
+//    private String filepath = "the_next_episode_16.wav";
 //    private String filepath = "light_my_fire_16.wav";
 
     public void init() {
@@ -110,7 +111,7 @@ public class AppletMain extends Applet implements Runnable {
         getToolkit().sync();
     }
 
-    final static int SLEEP_NANOS = (int) (0.1 * 1000000); // (1/5 of a millisecond)
+    final static int SLEEP_NANOS = (int) (0.2 * 1000000); // (1/5 of a millisecond)
     double[] barMagnitudes = null;
 
     // TODO: separate the frame regulators and have separate thread write to graphics
@@ -126,15 +127,17 @@ public class AppletMain extends Applet implements Runnable {
         mixerThread.start();
         frameRegThread.start();
 
+        Utility.log("AppletMain.run() loop start");
         boolean freshStart = true;
         boolean interpolateFrame;
         while (true) {
             try {
-//                long start = System.currentTimeMillis();
+                long start = System.currentTimeMillis();
                 setupBackBuffer();
                 if (freshStart) {
                     while (!visualizer.newResults) {
-                        Thread.sleep(0, SLEEP_NANOS);
+//                        Thread.sleep(0, SLEEP_NANOS);
+                        Thread.sleep(1);
                     }
                     freshStart = false;
                 }
@@ -143,17 +146,21 @@ public class AppletMain extends Applet implements Runnable {
                 if (visualizer.newResults) {
                     double[] fftResults  = visualizer.getFftResults();
 
+                    Utility.log("AppletMain new results");
                     convertToRangeMagnitudes(fftResults);
+                    Utility.log("AppletMain converted new results");
                     interpolateFrame = false;
                 } else {
+                    Utility.log("AppletMain interpolating frame");
                     interpolateFrame = true;
                 }
 
                 drawGraphics(interpolateFrame);
 
-                backBuffer.getWidth(this); // not sure if necessary
+//                backBuffer.getWidth(this); // not sure if necessary
                 repaint();
-//                System.out.println(System.currentTimeMillis() - start + " ms");
+                System.out.println(System.currentTimeMillis() - start + " ms");
+                Utility.log("AppletMain waitForNextFrame");
                 graphicsFrameReg.waitForNextFrame();
             } catch (Exception e) {
                 e.printStackTrace();

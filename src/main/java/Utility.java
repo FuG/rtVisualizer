@@ -130,4 +130,14 @@ public class Utility {
     public static double getCurrentMillis() {
         return System.nanoTime() / 1000000.0;
     }
+
+    public static long getRemainingNanosFromMillis(double millis) {
+        long ms = (long) millis;
+        double remainder = millis - ms;
+        return (long) (remainder * 1000000);
+    }
+
+    public static void log(String msg) {
+//        System.out.println(System.currentTimeMillis() + " : " + msg);
+    }
 }

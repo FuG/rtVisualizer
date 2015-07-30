@@ -18,10 +18,10 @@ public class FrameRegulator implements Runnable {
     }
 
     public void init() {
-        nextFrameStartMillis = Utility.getCurrentMillis();
+        nextFrameStartMillis = System.currentTimeMillis();
     }
 
-    public synchronized double waitForNextFrame() throws InterruptedException {
+    public double waitForNextFrame() throws InterruptedException {
         double millisToSleep = millisTilNextFrame();
         sleep(millisToSleep);
         return millisToSleep;
@@ -39,16 +39,24 @@ public class FrameRegulator implements Runnable {
     }
 
     private double millisTilNextFrame() {
-        return nextFrameStartMillis - Utility.getCurrentMillis();
+        return nextFrameStartMillis - System.currentTimeMillis();
     }
 
     private void sleep(double millisToSleep) {
+        Utility.log("FrameRegulator sleep(" + millisToSleep + ")");
+//        if (millisToSleep > 0) {
+//            long ms = (long) millisToSleep;
+//            int ns = (int) ((millisToSleep - ms) * 1000000);
+//
+//            try {
+//                Thread.sleep(ms, ns);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
         if (millisToSleep > 0) {
-            long ms = (long) millisToSleep;
-            int ns = (int) ((millisToSleep - millisToSleep) * 1000000);
-
             try {
-                Thread.sleep(ms, ns);
+                Thread.sleep((long) millisToSleep);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
