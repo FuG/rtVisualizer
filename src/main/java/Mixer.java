@@ -19,7 +19,7 @@ public class Mixer implements Runnable {
     public boolean paused;
 
     public Mixer(Player player, Visualizer visualizer, AudioFile audioFile) throws IOException, UnsupportedAudioFileException {
-        frameRegulator = new FrameRegulator(60.0); // 60ms b/w frames
+        frameRegulator = new FrameRegulator(10);
         this.player = player;
         this.visualizer = visualizer;
         this.audioFile = audioFile;
@@ -39,29 +39,23 @@ public class Mixer implements Runnable {
     }
 
     private synchronized void process() {
-        int bufferSize = 2646; // samples per frame * 2 bytes (16 bit rate) at 60 fps (single channel)
+        int bufferSize = (int) (44100 / Settings.FRAMES_PER_SECOND); // samples per frame * 2 bytes (16 bit rate) at 60 fps (single channel)
         double[] dspBuffer = new double[bufferSize];
         double[] playBuffer = new double[bufferSize * 2]; // to get stereo input
 
-        Utility.log("Mixer loop starting");
-        long lastStart = System.currentTimeMillis();
         for (int i = 0; i < leftBuffer.length; i++) {
             if (i % bufferSize == 0) {
                 byte[] finalPlayBuffer = Utility.doublesToBytes(playBuffer, 2, true);
                 double[] fftResults = transform(dspBuffer);
 
-                System.out.println(System.currentTimeMillis() - lastStart + " ms");
-                double waitTime = 0;
                 try {
-                    Utility.log("Mixer starting wait");
-                    waitTime = frameRegulator.waitForNextFrame();
+                    wait();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                Utility.log("Mixer waited for (" + waitTime + ")"); // TODO: FIX: ms til next: -2.110165790947961E9
-                lastStart = System.currentTimeMillis();
-                player.enqueue(finalPlayBuffer);
+
                 visualizer.process(fftResults);
+                player.enqueue(finalPlayBuffer);
             }
             dspBuffer[i % bufferSize] = leftBuffer[i];
             int playBufferIndex = (i % bufferSize) * 2;
@@ -90,7 +84,7 @@ public class Mixer implements Runnable {
     }
 
     private double[] getPaddedArray(double[] input) {
-        int paddedLength = 4096;
+        int paddedLength = Settings.FFT_BIN_COUNT;
         double[] paddedInput = new double[paddedLength];
 
         System.arraycopy(input, 0, paddedInput, 0, input.length);

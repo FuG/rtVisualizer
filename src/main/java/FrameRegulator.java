@@ -1,65 +1,55 @@
+import java.awt.Frame;
+
 public class FrameRegulator implements Runnable {
+
     private int desiredFPS;
-    public double millisBetweenFrames;
-    public volatile double nextFrameStartMillis;
+    private double millisBetweenFrames;
+    private long frameStartMillis;
+
+    int frameCount = 0;
 
     public FrameRegulator() {
-        desiredFPS = 60;
-        millisBetweenFrames = 1.0 / desiredFPS * 1000;
+        desiredFPS = (int) Settings.FRAMES_PER_SECOND;
+        millisBetweenFrames = Settings.MILLIS_BETWEEN_FRAMES;
     }
 
     public FrameRegulator(int fps) {
         desiredFPS = fps;
-        millisBetweenFrames = 1.0 / desiredFPS * 1000;
+        millisBetweenFrames = 1000.0 / desiredFPS;
     }
 
     public FrameRegulator(double millisBetweenFrames) {
         this.millisBetweenFrames = millisBetweenFrames;
     }
 
-    public void init() {
-        nextFrameStartMillis = System.currentTimeMillis();
+    public void start() {
+        frameStartMillis = System.currentTimeMillis();
     }
 
-    public double waitForNextFrame() throws InterruptedException {
-        double millisToSleep = millisTilNextFrame();
-        sleep(millisToSleep);
-        return millisToSleep;
+    public void waitForNextFrame() throws InterruptedException {
+        frameStartMillis += millisBetweenFrames;
+        long timeDelta = (long) (millisBetweenFrames - (System.currentTimeMillis() - frameStartMillis));
+
+        System.out.println("(" + frameCount++ + ") Sleep Time: " + timeDelta);
+
+        if (timeDelta > 0) {
+            Thread.sleep(timeDelta);
+        }
     }
 
     @Override
     public void run() {
-        init();
 
-        while (true) {
-            nextFrameStartMillis += millisBetweenFrames;
-
-            sleep(millisTilNextFrame());
-        }
     }
 
-    private double millisTilNextFrame() {
-        return nextFrameStartMillis - System.currentTimeMillis();
-    }
-
-    private void sleep(double millisToSleep) {
-        Utility.log("FrameRegulator sleep(" + millisToSleep + ")");
-//        if (millisToSleep > 0) {
-//            long ms = (long) millisToSleep;
-//            int ns = (int) ((millisToSleep - ms) * 1000000);
+//    public boolean hasNextUpdate() {
+//        boolean hasUpdate = false;
 //
-//            try {
-//                Thread.sleep(ms, ns);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
+//        if (framesBeforeRealUpdate == 0) {
+//            hasUpdate = true;
+//            framesBeforeRealUpdate = Settings.FRAMES_BETWEEN_REAL_UPDATE;
 //        }
-        if (millisToSleep > 0) {
-            try {
-                Thread.sleep((long) millisToSleep);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+//        framesBeforeRealUpdate--;
+//        return hasUpdate;
+//    }
 }

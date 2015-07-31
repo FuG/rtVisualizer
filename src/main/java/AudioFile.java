@@ -200,6 +200,11 @@ public class AudioFile {
         return right.getRawBufferInstance();
     }
 
+    public void garbageCollect() {
+        rawStereoBuffer = null;
+        left.rawBuffer = null;
+        right.rawBuffer = null;
+    }
 
 
     /* EVERYTHING BELOW THIS COMMENT => FOR TEST USAGE ONLY */

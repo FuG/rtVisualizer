@@ -16,10 +16,20 @@ public class Player implements Runnable {
     TargetDataLine targetLine;
 
     boolean hasBufferFrame = false;
+    int bufferCount = Settings.PLAYER_BUFFER_SIZE;
 
     public Player(AudioFormat audioFormat) {
         this.audioFormat = audioFormat;
         rawQueue = new Vector<>();
+
+        try {
+            sourceLine = getSourceLine();
+            targetLine = getTargetLine();
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
+
+        setMasterGain(Settings.PLAYER_MASTER_VOLUME);
     }
 
     @Override
@@ -36,9 +46,6 @@ public class Player implements Runnable {
     }
 
     private synchronized void playFromBuffer() throws LineUnavailableException {
-        sourceLine = getSourceLine();
-        targetLine = getTargetLine();
-
         if (sourceLine != null) {
             sourceLine.start();
 
@@ -51,9 +58,6 @@ public class Player implements Runnable {
     }
 
     private synchronized void playFromQueue() throws LineUnavailableException {
-        sourceLine = getSourceLine();
-        targetLine = getTargetLine();
-
         if (sourceLine != null) {
             sourceLine.start();
 
@@ -91,17 +95,22 @@ public class Player implements Runnable {
 
     public synchronized void enqueue(byte[] buffer) {
         rawQueue.add(buffer);
-        notify();
-//        if (hasBufferFrame) {
-//            notify();
-//        } else {
-//            hasBufferFrame = true;
-//        }
+//        notify();
+        if (hasBufferFrame) {
+            notify();
+        } else {
+            if (bufferCount-- == 0) {
+                hasBufferFrame = true;
+            }
+        }
     }
 
     public void setMasterGain(float volume) {
         float db=(float)(Math.log(volume) / Math.log(10.0) * 20.0);
-        FloatControl gainControl = (FloatControl) sourceLine.getControl(FloatControl.Type.MASTER_GAIN);
-        gainControl.setValue(db);
+
+        if (sourceLine != null) {
+            FloatControl gainControl = (FloatControl) sourceLine.getControl(FloatControl.Type.MASTER_GAIN);
+            gainControl.setValue(db);
+        }
     }
 }
