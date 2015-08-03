@@ -20,14 +20,14 @@ public class AppletMain extends Applet implements Runnable {
     Thread mainThread, playerThread, visualizerThread, mixerThread;
     FrameRegulator dspFrameReg, graphicsFrameReg;
 
-    long frameCountResetTime = 0;
-    int frameCount = 0, lastFPS = 0;
+    volatile long frameCountResetTime = 0;
+    volatile int frameCount = 0, lastFPS = 0;
 
-    private String filepath = "nara_16.wav";
+//    private String filepath = "nara_16.wav";
 //    private String filepath = "truth_be_known_16.wav";
 //    private String filepath = "gangnam_style_16.wav";
 //    private String filepath = "the_next_episode_16.wav";
-//    private String filepath = "light_my_fire_16.wav";
+    private String filepath = "light_my_fire_16.wav";
 //    private String filepath = "came_to_this_16.wav";
 //    private String filepath = "dark_horse_16.wav";
 //    private String filepath = "every_time_we_touch_16.wav";
@@ -125,7 +125,7 @@ public class AppletMain extends Applet implements Runnable {
         // TODO: extract this fps counter into method
 
         g.drawImage(backBuffer, 0, 0, this);
-//        getToolkit().sync();
+        getToolkit().sync();
     }
 
     @Override
