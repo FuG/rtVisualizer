@@ -1,3 +1,7 @@
+package app;
+
+import app.delayed.DelayAudioPacketQueue;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -15,12 +19,16 @@ public class Player implements Runnable {
     SourceDataLine sourceLine;
     TargetDataLine targetLine;
 
-    boolean hasBufferFrame = false;
+    boolean hasBufferFrames = false;
     int bufferCount = Settings.PLAYER_BUFFER_SIZE;
+
+    DelayAudioPacketQueue dapQueue;
 
     public Player(AudioFormat audioFormat) {
         this.audioFormat = audioFormat;
         rawQueue = new Vector<>();
+
+        dapQueue = new DelayAudioPacketQueue();
 
         try {
             sourceLine = getSourceLine();
@@ -62,16 +70,12 @@ public class Player implements Runnable {
             sourceLine.start();
 
             while (true) {
-                if (rawQueue.size() == 0) {
-                    try {
-                        wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    byte[] buffer = dapQueue.next();
+                    sourceLine.write(buffer, 0, buffer.length);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                byte[] buffer = rawQueue.remove(0);
-
-                sourceLine.write(buffer, 0, buffer.length);
             }
         }
     }
@@ -93,16 +97,8 @@ public class Player implements Runnable {
         return line;
     }
 
-    public synchronized void enqueue(byte[] buffer) {
-        rawQueue.add(buffer);
-//        notify();
-        if (hasBufferFrame) {
-            notify();
-        } else {
-            if (bufferCount-- == 0) {
-                hasBufferFrame = true;
-            }
-        }
+    public void enqueue(byte[] buffer) {
+        dapQueue.add(buffer);
     }
 
     public void setMasterGain(float volume) {

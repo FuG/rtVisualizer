@@ -1,3 +1,5 @@
+package app;
+
 import javax.sound.sampled.UnsupportedAudioFileException;
 import java.applet.Applet;
 import java.awt.Color;
@@ -17,7 +19,7 @@ public class AppletMain extends Applet implements Runnable {
     Player player;
     Visualizer visualizer;
     Mixer mixer;
-    Thread mainThread, playerThread, visualizerThread, mixerThread;
+    Thread mainThread, playerThread, mixerThread;
     FrameRegulator dspFrameReg, graphicsFrameReg;
 
     volatile long frameCountResetTime = 0;
@@ -25,9 +27,9 @@ public class AppletMain extends Applet implements Runnable {
 
 //    private String filepath = "nara_16.wav";
 //    private String filepath = "truth_be_known_16.wav";
-//    private String filepath = "gangnam_style_16.wav";
+    private String filepath = "gangnam_style_16.wav";
 //    private String filepath = "the_next_episode_16.wav";
-    private String filepath = "light_my_fire_16.wav";
+//    private String filepath = "light_my_fire_16.wav";
 //    private String filepath = "came_to_this_16.wav";
 //    private String filepath = "dark_horse_16.wav";
 //    private String filepath = "every_time_we_touch_16.wav";
@@ -81,10 +83,6 @@ public class AppletMain extends Applet implements Runnable {
             playerThread = new Thread(player);
             playerThread.start();
         }
-        if (visualizerThread == null) {
-            visualizerThread = new Thread(visualizer);
-            visualizerThread.start();
-        }
         if (mixerThread == null) {
             mixerThread = new Thread(mixer);
             mixerThread.start();
@@ -111,16 +109,16 @@ public class AppletMain extends Applet implements Runnable {
 
     // repaint() schedules the AWT thread to call update()
     public void update(Graphics g) {
-        frameCount++;
-        long timeDelta = System.currentTimeMillis() - frameCountResetTime;
-        if (timeDelta >= 1000) {
-            frameCountResetTime = System.currentTimeMillis();
-            lastFPS = frameCount;
-            frameCount = 0;
-        }
-
-        backGraphics.setColor(Color.GREEN);
-        backGraphics.drawString("FPS: " + lastFPS, 10, 10);
+//        frameCount++;
+//        long timeDelta = System.currentTimeMillis() - frameCountResetTime;
+//        if (timeDelta >= 1000) {
+//            frameCountResetTime = System.currentTimeMillis();
+//            lastFPS = frameCount;
+//            frameCount = 0;
+//        }
+//
+//        backGraphics.setColor(Color.GREEN);
+//        backGraphics.drawString("FPS: " + lastFPS, 10, 10);
 
         // TODO: extract this fps counter into method
 
@@ -138,15 +136,9 @@ public class AppletMain extends Applet implements Runnable {
         while (true) {
             try {
                 long start = System.currentTimeMillis();
-                setupBackBuffer();
-                mixer.processNext();
+//                setupBackBuffer();
 
-                while (!visualizer.newResults) {
-                    Thread.sleep(1);
-                }
-
-                double[] fftResults;
-                fftResults = visualizer.getFftResults();
+                double[] fftResults = visualizer.nextFftData();
 
 //                createAllFrequencyVisual(fftResults);
                 createRangedBarsVisual(fftResults);
@@ -154,7 +146,7 @@ public class AppletMain extends Applet implements Runnable {
 
                 repaint();
 //                System.out.println(System.currentTimeMillis() - startRegulation + " ms");
-                dspFrameReg.waitForNextFrame();
+//                dspFrameReg.waitForNextFrame();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -204,6 +196,8 @@ public class AppletMain extends Applet implements Runnable {
             volume += rangeMagnitudes[i] / 8;
         }
         volume = (Math.pow(2, volume / 4) - 1) * 255;
+
+        setupBackBuffer();
         int gradientColor = 0;
         Color gradient = new Color(gradientColor, gradientColor, gradientColor, (int) volume);
         backGraphics.setColor(gradient);

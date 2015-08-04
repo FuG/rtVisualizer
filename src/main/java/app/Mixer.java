@@ -1,3 +1,5 @@
+package app;
+
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
@@ -38,7 +40,7 @@ public class Mixer implements Runnable {
         process();
     }
 
-    private synchronized void process() {
+    private void process() {
         int bufferSize = (int) (44100 / Settings.FRAMES_PER_SECOND); // samples per frame * 2 bytes (16 bit rate) at 60 fps (single channel)
         double[] dspBuffer = new double[bufferSize];
         double[] playBuffer = new double[bufferSize * 2]; // to get stereo input
@@ -49,12 +51,12 @@ public class Mixer implements Runnable {
                 double[] fftResults = transform(dspBuffer);
 
                 try {
-                    wait();
+                    Thread.sleep((long) (Settings.MILLIS_BETWEEN_FRAMES / 2));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
-                visualizer.process(fftResults);
+                visualizer.enqueue(fftResults);
                 player.enqueue(finalPlayBuffer);
             }
             dspBuffer[i % bufferSize] = leftBuffer[i];

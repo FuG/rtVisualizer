@@ -1,3 +1,4 @@
+package app;
 
 public class Generator {
     public static double[] generateSineWave(double frequency, double sampleRate, int totalFrames) {

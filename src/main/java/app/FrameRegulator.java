@@ -1,4 +1,4 @@
-import java.awt.Frame;
+package app;
 
 public class FrameRegulator implements Runnable {
 
@@ -30,7 +30,7 @@ public class FrameRegulator implements Runnable {
         frameStartMillis += millisBetweenFrames;
         long timeDelta = (long) (millisBetweenFrames - (System.currentTimeMillis() - frameStartMillis));
 
-        System.out.println("(" + frameCount++ + ") Sleep Time: " + timeDelta);
+//        System.out.println("(" + frameCount++ + ") Sleep Time: " + timeDelta);
 
         if (timeDelta > 0) {
             Thread.sleep(timeDelta);
