@@ -10,8 +10,9 @@ import java.util.Random;
 
 public class SpittingBass implements IVisual {
     static double[] ranges = null; // 32 bands
-    static float maxVolume = 0;
+    static float maxBassVolume = 0;
     final int MAX_RADIUS = 50;
+    float maxBassVolumeEncountered = 1.0f;
     Random rand;
 
     List<Particle> particles = new ArrayList<>();
@@ -22,7 +23,7 @@ public class SpittingBass implements IVisual {
         float frCoeff; // friction coefficient, i.e. - how much particle will slow over time
         final int FRAMES_TO_LIVE = 20;
         public int framesTilDeath = FRAMES_TO_LIVE;
-        int radius = 2;
+        int radius = 1;
         float magnitude;
 
         public Particle(float magnitude) {
@@ -35,14 +36,14 @@ public class SpittingBass implements IVisual {
             x = xVector * (MAX_RADIUS + radius) - radius;
             y = yVector * (MAX_RADIUS + radius) - radius;
 
-            xVector *= magnitude;
-            yVector *= magnitude;
+            xVector *= magnitude * 50;
+            yVector *= magnitude * 50;
 
             this.magnitude = magnitude;
         }
 
         public void draw(Graphics g) {
-            g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * 255)));
+            g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
 
             g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), radius * 2, radius * 2);
 
@@ -73,26 +74,27 @@ public class SpittingBass implements IVisual {
             }
         }
 
-        float volume = 0;
+        float bassMagnitude = 0;
 
-        for (int i = 2; i < 10; i++) {
-            volume += rangeMagnitudes[i] / 8;
+        for (int i = 3; i < 14; i++) { // bass beat ranges
+            bassMagnitude += rangeMagnitudes[i] / 11;
         }
-        volume = (float) (Math.pow(2, volume / 2) - 1);
-        if (volume > maxVolume) {
-            maxVolume = volume;
-            System.out.println("Max Volume: " + maxVolume);
+        // Finding max volume
+        if ((float) (Math.pow(2, bassMagnitude) - 1) > maxBassVolume) {
+            maxBassVolume = bassMagnitude;
+            System.out.println("Max Bass Volume: " + maxBassVolume);
         }
+        maxBassVolumeEncountered = bassMagnitude > maxBassVolumeEncountered ? bassMagnitude : maxBassVolumeEncountered;
+        bassMagnitude = (float) (Math.pow(2, bassMagnitude / maxBassVolumeEncountered) - 1); // adjust bass Magnitude
 
         setupBackBuffer(Color.BLACK, g);
-        setupBassCircle(volume, g);
+        setupBassCircle(bassMagnitude, g);
 
 //        for (int i = 0; i < rangeMagnitudes.length; i++) {
-//
+//             // TODO: do something with frequency
 //        }
 
-        float bassMagnitude = volume * 50;
-        for (int i = 0; i < bassMagnitude; i++) {
+        for (int i = 0; i < bassMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 80; i++) {
             particles.add(new Particle(bassMagnitude));
         }
 

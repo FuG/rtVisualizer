@@ -2,7 +2,7 @@ package app;
 
 public class Settings {
     // Mixer
-    public static double FRAMES_PER_SECOND = 30;
+    public static double FRAMES_PER_SECOND = 60;
     public static double MILLIS_BETWEEN_FRAMES = 1000 / FRAMES_PER_SECOND;
     public static int FFT_BIN_COUNT = (int) Math.pow(2, (int) (Math.log(44100 / FRAMES_PER_SECOND) / Math.log(2) + 1));
     public static double FFT_BIN_FREQUENCY = 44100.0 / FFT_BIN_COUNT;
@@ -18,6 +18,7 @@ public class Settings {
 
     // Visualizer
     public static int VISUALIZER_DELAY_TIME_MS = 0;
+    public static int VISUALIZER_PARTICLE_MAGNITUDE = 4; // 1 - 5
 
     // Audio Files
     private static String[] AUDIO_FILE_NAMES = {
@@ -30,5 +31,5 @@ public class Settings {
             "dark_horse_16.wav",            /* 6  */
             "every_time_we_touch_16.wav"    /* 7  */
     };
-    public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[2];
+    public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[4];
 }

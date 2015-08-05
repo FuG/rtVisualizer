@@ -118,7 +118,7 @@ public class AppletMain extends Applet implements Runnable {
 //        displayFrameRate();
 
         g.drawImage(backBuffer, 0, 0, this);
-        getToolkit().sync();
+//        getToolkit().sync();
     }
 
     @Override
