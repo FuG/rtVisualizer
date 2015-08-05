@@ -2,13 +2,10 @@ package app;
 
 import app.delayed.DelayFftDataPacketQueue;
 
-public class Visualizer {
-    public volatile double[] fftResults;
-
+public class FFTResultQueue {
     DelayFftDataPacketQueue dfdpQueue;
 
-    public Visualizer() {
-        fftResults = null;
+    public FFTResultQueue() {
         dfdpQueue = new DelayFftDataPacketQueue();
     }
 

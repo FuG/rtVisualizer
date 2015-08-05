@@ -18,4 +18,17 @@ public class Settings {
 
     // Visualizer
     public static int VISUALIZER_DELAY_TIME_MS = 0;
+
+    // Audio Files
+    private static String[] AUDIO_FILE_NAMES = {
+            "nara_16.wav",                  /* 0  */
+            "truth_be_known_16.wav",        /* 1  */
+            "gangnam_style_16.wav",         /* 2  */
+            "the_next_episode_16.wav",      /* 3  */
+            "light_my_fire_16.wav",         /* 4  */
+            "came_to_this_16.wav",          /* 5  */
+            "dark_horse_16.wav",            /* 6  */
+            "every_time_we_touch_16.wav"    /* 7  */
+    };
+    public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[1];
 }

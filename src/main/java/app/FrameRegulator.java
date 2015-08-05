@@ -41,15 +41,4 @@ public class FrameRegulator implements Runnable {
     public void run() {
 
     }
-
-//    public boolean hasNextUpdate() {
-//        boolean hasUpdate = false;
-//
-//        if (framesBeforeRealUpdate == 0) {
-//            hasUpdate = true;
-//            framesBeforeRealUpdate = Settings.FRAMES_BETWEEN_REAL_UPDATE;
-//        }
-//        framesBeforeRealUpdate--;
-//        return hasUpdate;
-//    }
 }

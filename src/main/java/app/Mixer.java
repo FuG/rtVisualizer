@@ -11,7 +11,7 @@ import java.io.IOException;
 public class Mixer implements Runnable {
     FrameRegulator frameRegulator;
     Player player;
-    Visualizer visualizer;
+    FFTResultQueue fftResultQueue;
     AudioFile audioFile;
     double[] leftBuffer, rightBuffer;
     double[] normalStereoBuffer;
@@ -20,10 +20,10 @@ public class Mixer implements Runnable {
 
     public boolean paused;
 
-    public Mixer(Player player, Visualizer visualizer, AudioFile audioFile) throws IOException, UnsupportedAudioFileException {
+    public Mixer(Player player, FFTResultQueue fftResultQueue, AudioFile audioFile) throws IOException, UnsupportedAudioFileException {
         frameRegulator = new FrameRegulator(10);
         this.player = player;
-        this.visualizer = visualizer;
+        this.fftResultQueue = fftResultQueue;
         this.audioFile = audioFile;
         normalStereoBuffer = audioFile.getNormalBufferInstance();
         leftBuffer = audioFile.left.getNormalBufferInstance();
@@ -56,7 +56,7 @@ public class Mixer implements Runnable {
                     e.printStackTrace();
                 }
 
-                visualizer.enqueue(fftResults);
+                fftResultQueue.enqueue(fftResults);
                 player.enqueue(finalPlayBuffer);
             }
             dspBuffer[i % bufferSize] = leftBuffer[i];

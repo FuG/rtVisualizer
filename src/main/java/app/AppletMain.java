@@ -17,22 +17,15 @@ public class AppletMain extends Applet implements Runnable {
 
     AudioFile audioFile;
     Player player;
-    Visualizer visualizer;
+    FFTResultQueue fftResultQueue;
     Mixer mixer;
     Thread mainThread, playerThread, mixerThread;
-    FrameRegulator dspFrameReg, graphicsFrameReg;
+    FrameRegulator frameReg, graphicsFrameReg;
 
     volatile long frameCountResetTime = 0;
     volatile int frameCount = 0, lastFPS = 0;
 
-//    private String filepath = "nara_16.wav";
-//    private String filepath = "truth_be_known_16.wav";
-    private String filepath = "gangnam_style_16.wav";
-//    private String filepath = "the_next_episode_16.wav";
-//    private String filepath = "light_my_fire_16.wav";
-//    private String filepath = "came_to_this_16.wav";
-//    private String filepath = "dark_horse_16.wav";
-//    private String filepath = "every_time_we_touch_16.wav";
+    private String filepath = Settings.AUDIO_FILE_NAME;
 
     public void init() {
         setSize(Settings.APPLET_WIDTH, Settings.APPLET_HEIGHT);
@@ -44,8 +37,8 @@ public class AppletMain extends Applet implements Runnable {
 
         initRenderHints(backGraphics);
 
-//        dspFrameReg = new FrameRegulator();
-        dspFrameReg = new FrameRegulator();
+//        frameReg = new FrameRegulator();
+        frameReg = new FrameRegulator();
 //        graphicsFrameReg = new FrameRegulator(60); // 16.6666667 milliseconds b/w frames (60 FPS)
 
         try {
@@ -58,9 +51,9 @@ public class AppletMain extends Applet implements Runnable {
 //        setupFreqProgression(audioFile);
 
         player = new Player(audioFile.getBaseFormat());
-        visualizer = new Visualizer();
+        fftResultQueue = new FFTResultQueue();
         try {
-            mixer = new Mixer(player, visualizer, audioFile);
+            mixer = new Mixer(player, fftResultQueue, audioFile);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (UnsupportedAudioFileException e) {
@@ -107,18 +100,22 @@ public class AppletMain extends Applet implements Runnable {
         g2.setRenderingHints(renderingHintsMap);
     }
 
+    private void displayFrameRate() {
+        frameCount++;
+        long timeDelta = System.currentTimeMillis() - frameCountResetTime;
+        if (timeDelta >= 1000) {
+            frameCountResetTime = System.currentTimeMillis();
+            lastFPS = frameCount;
+            frameCount = 0;
+        }
+
+        backGraphics.setColor(Color.GREEN);
+        backGraphics.drawString("FPS: " + lastFPS, 10, 10);
+    }
+
     // repaint() schedules the AWT thread to call update()
     public void update(Graphics g) {
-//        frameCount++;
-//        long timeDelta = System.currentTimeMillis() - frameCountResetTime;
-//        if (timeDelta >= 1000) {
-//            frameCountResetTime = System.currentTimeMillis();
-//            lastFPS = frameCount;
-//            frameCount = 0;
-//        }
-//
-//        backGraphics.setColor(Color.GREEN);
-//        backGraphics.drawString("FPS: " + lastFPS, 10, 10);
+//        displayFrameRate();
 
         // TODO: extract this fps counter into method
 
@@ -128,9 +125,7 @@ public class AppletMain extends Applet implements Runnable {
 
     @Override
     public void run() {
-//        dspFrameReg.setDependentFrameReg(graphicsFrameReg);
-//        dspFrameReg.startRegulation();
-        dspFrameReg.start();
+        frameReg.start();
 
         frameCountResetTime = System.currentTimeMillis();
         while (true) {
@@ -138,7 +133,7 @@ public class AppletMain extends Applet implements Runnable {
                 long start = System.currentTimeMillis();
 //                setupBackBuffer();
 
-                double[] fftResults = visualizer.nextFftData();
+                double[] fftResults = fftResultQueue.nextFftData();
 
 //                createAllFrequencyVisual(fftResults);
                 createRangedBarsVisual(fftResults);
@@ -146,7 +141,7 @@ public class AppletMain extends Applet implements Runnable {
 
                 repaint();
 //                System.out.println(System.currentTimeMillis() - startRegulation + " ms");
-//                dspFrameReg.waitForNextFrame();
+//                frameReg.waitForNextFrame();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -170,8 +165,7 @@ public class AppletMain extends Applet implements Runnable {
         }
     }
 
-    static double[] lastFFTResults = null;
-
+    static double[] lastRangedMagnitudes = null;
     private void createRangedBarsVisual(double[] fftResults) {
         setupRanges();
 
@@ -203,14 +197,39 @@ public class AppletMain extends Applet implements Runnable {
         backGraphics.setColor(gradient);
         backGraphics.fillRect(0, 0, Settings.APPLET_WIDTH, Settings.APPLET_HEIGHT);
 
-        // bars
-        backGraphics.setColor(Color.ORANGE);
-
+        // current bars
+//        backGraphics.setColor(Color.ORANGE);
+        Color fader = new Color(255, 117, 25, 230);
+        Color noFade = new Color(255, 117, 25, 255);
+        backGraphics.setColor(noFade);
         for (int i = 0; i < rangeMagnitudes.length; i++) {
             double magnitude = Math.sqrt(rangeMagnitudes[i]) * 25 * 10;
-//            System.out.println(i + ": " + magnitude);
+            backGraphics.setColor(noFade);
             backGraphics.fillRect(i * 8 * 6 + 2, (int) (Settings.APPLET_HEIGHT - 1 - magnitude), 8 * 6 - 4, (int) magnitude);
+            if (lastRangedMagnitudes != null) {
+                double lastMagnitude = Math.sqrt(lastRangedMagnitudes[i]) * 25 * 10;
+                double semiMag = lastMagnitude - magnitude;
+//                System.out.println(i + ": " + semiMag);
+                if (semiMag > 0) {
+                    backGraphics.setColor(fader);
+                    backGraphics.fillRect(i * 8 * 6 + 2, (int) (Settings.APPLET_HEIGHT - 1 - semiMag), 8 * 6 - 4, (int) semiMag);
+                }
+            }
         }
+
+        // full faded bars
+        if (lastRangedMagnitudes != null) {
+            Color fadest = new Color(255, 117, 25, 200);
+            backGraphics.setColor(fadest);
+            for (int i = 0; i < lastRangedMagnitudes.length; i++) {
+                double magnitude = Math.sqrt(lastRangedMagnitudes[i]) * 25 * 10;
+//            System.out.println(i + ": " + magnitude);
+                backGraphics.setColor(fadest);
+                backGraphics.fillRect(i * 8 * 6 + 2, (int) (Settings.APPLET_HEIGHT - 1 - magnitude), 8 * 6 - 4, (int) magnitude);
+            }
+        }
+
+        lastRangedMagnitudes = rangeMagnitudes;
     }
 
     private void createAllFrequencyVisual(double[] fftResults) {
@@ -233,7 +252,5 @@ public class AppletMain extends Applet implements Runnable {
         // wipe the image
         backGraphics.setColor(Color.WHITE);
         backGraphics.fillRect(0, 0, Settings.APPLET_WIDTH, Settings.APPLET_HEIGHT);
-
-        // draw grid lines
     }
 }
