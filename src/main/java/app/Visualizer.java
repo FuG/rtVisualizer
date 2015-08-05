@@ -1,6 +1,7 @@
 package app;
 
 import app.visuals.IVisual;
+import app.visuals.SpittingBass;
 import app.visuals.VerticalBars;
 
 import java.awt.Color;
@@ -8,13 +9,21 @@ import java.awt.Graphics;
 
 public class Visualizer {
     IVisual visualEffects;
+    long startTime, endTime;
+    long allowedTime = (long) Settings.MILLIS_BETWEEN_FRAMES;
 
     public Visualizer() {
-        visualEffects = new VerticalBars();
+//        visualEffects = new VerticalBars();
+        visualEffects = new SpittingBass();
     }
 
     public void process(double[] fftResults, Graphics g) {
+        startTime = System.currentTimeMillis();
+
         visualEffects.process(fftResults, g);
+
+        endTime = System.currentTimeMillis();
+        System.out.println("Frame Time: " + (endTime - startTime) + " / " + allowedTime + " ms");
     }
 
     // TODO: move these

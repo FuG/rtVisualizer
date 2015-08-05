@@ -15,8 +15,6 @@ public class VerticalBars implements IVisual {
 
     @Override
     public void process(double[] fftResults, Graphics g) {
-        setupRanges();
-
         int rangeBins = ranges.length;
         double[] rangeMagnitudes = new double[rangeBins];
 
