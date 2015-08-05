@@ -30,5 +30,5 @@ public class Settings {
             "dark_horse_16.wav",            /* 6  */
             "every_time_we_touch_16.wav"    /* 7  */
     };
-    public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[1];
+    public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[3];
 }

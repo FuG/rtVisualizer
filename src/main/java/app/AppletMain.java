@@ -20,7 +20,7 @@ public class AppletMain extends Applet implements Runnable {
     FFTResultQueue fftResultQueue;
     Mixer mixer;
     Thread mainThread, playerThread, mixerThread;
-    FrameRegulator frameReg, graphicsFrameReg;
+    FrameRegulator frameReg;
 
     volatile long frameCountResetTime = 0;
     volatile int frameCount = 0, lastFPS = 0;
@@ -37,9 +37,7 @@ public class AppletMain extends Applet implements Runnable {
 
         initRenderHints(backGraphics);
 
-//        frameReg = new FrameRegulator();
         frameReg = new FrameRegulator();
-//        graphicsFrameReg = new FrameRegulator(60); // 16.6666667 milliseconds b/w frames (60 FPS)
 
         try {
             audioFile = new AudioFile(filepath);
@@ -135,8 +133,8 @@ public class AppletMain extends Applet implements Runnable {
 
                 double[] fftResults = fftResultQueue.nextFftData();
 
-//                createAllFrequencyVisual(fftResults);
-                createRangedBarsVisual(fftResults);
+//                Visualizer.createAllFrequencyVisual(fftResults, backGraphics);
+                Visualizer.createRangedBarsVisual(fftResults, backGraphics);
                 backBuffer.getWidth(this);
 
                 repaint();
@@ -146,111 +144,5 @@ public class AppletMain extends Applet implements Runnable {
                 e.printStackTrace();
             }
         }
-    }
-
-    static boolean needSetup = true;
-    static double[] ranges = null; // 14 bands
-
-    private static void setupRanges() {
-        if (needSetup) {
-            int binCount = 32;
-            ranges = new double[binCount];
-            ranges[0] = 33.333333333333333;
-
-            for (int i = 1; i < binCount; i++) {
-                ranges[i] = ranges[i - 1] * 1.221304;
-            }
-
-            needSetup = false;
-        }
-    }
-
-    static double[] lastRangedMagnitudes = null;
-    private void createRangedBarsVisual(double[] fftResults) {
-        setupRanges();
-
-        int rangeBins = ranges.length;
-        double[] rangeMagnitudes = new double[rangeBins];
-
-        int rangeIndex = 0;
-        for (int i = 1; i < fftResults.length && rangeIndex < rangeBins; i++) {
-            if (i * Settings.FFT_BIN_FREQUENCY > ranges[rangeIndex]) {
-                rangeIndex++;
-            }
-
-            if (rangeIndex < rangeBins) {
-                rangeMagnitudes[rangeIndex] += fftResults[i] / Math.sqrt(i);
-            }
-        }
-
-        // volume background
-        double volume = 0;
-
-        for (int i = 2; i < 10; i++) {
-            volume += rangeMagnitudes[i] / 8;
-        }
-        volume = (Math.pow(2, volume / 4) - 1) * 255;
-
-        setupBackBuffer();
-        int gradientColor = 0;
-        Color gradient = new Color(gradientColor, gradientColor, gradientColor, (int) volume);
-        backGraphics.setColor(gradient);
-        backGraphics.fillRect(0, 0, Settings.APPLET_WIDTH, Settings.APPLET_HEIGHT);
-
-        // current bars
-//        backGraphics.setColor(Color.ORANGE);
-        Color fader = new Color(255, 117, 25, 230);
-        Color noFade = new Color(255, 117, 25, 255);
-        backGraphics.setColor(noFade);
-        for (int i = 0; i < rangeMagnitudes.length; i++) {
-            double magnitude = Math.sqrt(rangeMagnitudes[i]) * 25 * 10;
-            backGraphics.setColor(noFade);
-            backGraphics.fillRect(i * 8 * 6 + 2, (int) (Settings.APPLET_HEIGHT - 1 - magnitude), 8 * 6 - 4, (int) magnitude);
-            if (lastRangedMagnitudes != null) {
-                double lastMagnitude = Math.sqrt(lastRangedMagnitudes[i]) * 25 * 10;
-                double semiMag = lastMagnitude - magnitude;
-//                System.out.println(i + ": " + semiMag);
-                if (semiMag > 0) {
-                    backGraphics.setColor(fader);
-                    backGraphics.fillRect(i * 8 * 6 + 2, (int) (Settings.APPLET_HEIGHT - 1 - semiMag), 8 * 6 - 4, (int) semiMag);
-                }
-            }
-        }
-
-        // full faded bars
-        if (lastRangedMagnitudes != null) {
-            Color fadest = new Color(255, 117, 25, 200);
-            backGraphics.setColor(fadest);
-            for (int i = 0; i < lastRangedMagnitudes.length; i++) {
-                double magnitude = Math.sqrt(lastRangedMagnitudes[i]) * 25 * 10;
-//            System.out.println(i + ": " + magnitude);
-                backGraphics.setColor(fadest);
-                backGraphics.fillRect(i * 8 * 6 + 2, (int) (Settings.APPLET_HEIGHT - 1 - magnitude), 8 * 6 - 4, (int) magnitude);
-            }
-        }
-
-        lastRangedMagnitudes = rangeMagnitudes;
-    }
-
-    private void createAllFrequencyVisual(double[] fftResults) {
-        // volume background
-        backGraphics.setColor(Color.CYAN);
-        backGraphics.fillRect(0, 799, 1024, (int) (799 - (64 / fftResults[0])));
-
-        // bars
-        backGraphics.setColor(Color.WHITE);
-        for (int i = 1; i <= fftResults.length / 2; i++) {
-            int startIndex = i * 2;
-            double sum = fftResults[startIndex] + fftResults[startIndex -1];
-            double normalizedAmplitude = Math.log10(startIndex * Settings.FFT_BIN_FREQUENCY) * (sum / 41.4 * 2);
-            int magnitude = (int) (799 * normalizedAmplitude);
-            backGraphics.drawLine(i, 799, i, 799 - magnitude);
-        }
-    }
-
-    private void setupBackBuffer() {
-        // wipe the image
-        backGraphics.setColor(Color.WHITE);
-        backGraphics.fillRect(0, 0, Settings.APPLET_WIDTH, Settings.APPLET_HEIGHT);
     }
 }
