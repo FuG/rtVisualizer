@@ -17,6 +17,7 @@ public class AppletMain extends Applet implements Runnable {
 
     AudioFile audioFile;
     Player player;
+    Visualizer visualizer;
     FFTResultQueue fftResultQueue;
     Mixer mixer;
     Thread mainThread, playerThread, mixerThread;
@@ -49,6 +50,7 @@ public class AppletMain extends Applet implements Runnable {
 //        setupFreqProgression(audioFile);
 
         player = new Player(audioFile.getBaseFormat());
+        visualizer = new Visualizer();
         fftResultQueue = new FFTResultQueue();
         try {
             mixer = new Mixer(player, fftResultQueue, audioFile);
@@ -115,8 +117,6 @@ public class AppletMain extends Applet implements Runnable {
     public void update(Graphics g) {
 //        displayFrameRate();
 
-        // TODO: extract this fps counter into method
-
         g.drawImage(backBuffer, 0, 0, this);
         getToolkit().sync();
     }
@@ -134,8 +134,8 @@ public class AppletMain extends Applet implements Runnable {
                 double[] fftResults = fftResultQueue.nextFftData();
 
 //                Visualizer.createAllFrequencyVisual(fftResults, backGraphics);
-                Visualizer.createRangedBarsVisual(fftResults, backGraphics);
-                backBuffer.getWidth(this);
+                visualizer.process(fftResults, backGraphics);
+//                backBuffer.getWidth(this);
 
                 repaint();
 //                System.out.println(System.currentTimeMillis() - startRegulation + " ms");
