@@ -18,10 +18,10 @@ public class SpittingBass implements IVisual {
     List<Particle> particles = new ArrayList<>();
 
     class Particle {
-        final int FRAMES_TO_LIVE = 16;
-        final float FRICTION_COEFFICIENT = 0.75f; // i.e. - how much particle will slow over time
+        final int FRAMES_TO_LIVE = 20;
+        final float FRICTION_COEFFICIENT = 0.5f; // i.e. - how much particle will slow over time
         final float MAX_VARIABILITY = 0.30f;
-        final int FORCE_CONSTANT = 100;
+        final int FORCE_CONSTANT = 200;
 
         float x, y;
         float xVector, yVector;
@@ -107,7 +107,7 @@ public class SpittingBass implements IVisual {
         setupBackBuffer(Color.BLACK, g);
         setupBassCircle(bassMagnitude, g);
 
-        for (int i = 0; i < bassMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 50; i++) {
+        for (int i = 0; i < bassMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 40; i++) {
             particles.add(new Particle(ranges[13], bassMagnitude));
         }
 
