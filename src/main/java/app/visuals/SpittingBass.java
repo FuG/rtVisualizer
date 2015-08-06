@@ -18,10 +18,10 @@ public class SpittingBass implements IVisual {
     List<Particle> particles = new ArrayList<>();
 
     class Particle {
-        final int FRAMES_TO_LIVE = 20;
-        final float FRICTION_COEFFICIENT = 0.80f; // i.e. - how much particle will slow over time
+        final int FRAMES_TO_LIVE = 16;
+        final float FRICTION_COEFFICIENT = 0.75f; // i.e. - how much particle will slow over time
         final float MAX_VARIABILITY = 0.30f;
-        final int FORCE_CONSTANT = 70;
+        final int FORCE_CONSTANT = 100;
 
         float x, y;
         float xVector, yVector;
@@ -50,7 +50,7 @@ public class SpittingBass implements IVisual {
         }
 
         public void draw(Graphics g) {
-            if (rand.nextBoolean()) {
+//            if (rand.nextBoolean()) {
                 if (frequency == ranges[13]) {
                     g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
                 } else {
@@ -60,7 +60,7 @@ public class SpittingBass implements IVisual {
                 }
 
                 g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), radius * 2, radius * 2);
-            }
+//            }
             xVector *= FRICTION_COEFFICIENT;
             yVector *= FRICTION_COEFFICIENT;
 
