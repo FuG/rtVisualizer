@@ -11,22 +11,23 @@ import java.util.Random;
 public class SpittingBass implements IVisual {
     static double[] ranges = null; // 32 bands
     static float maxBassVolume = 0;
-    final int MAX_RADIUS = 50;
+    final int MAX_RADIUS = 20;
     float maxBassVolumeEncountered = 1.0f;
     Random rand;
 
     List<Particle> particles = new ArrayList<>();
 
     class Particle {
+        final int FRAMES_TO_LIVE = 18;
+        final float FRICTION_COEFFICIENT = 0.95f; // i.e. - how much particle will slow over time
+        final float MAX_VARIABILITY = 0.35f;
+        final int FORCE_CONSTANT = 60;
+
         float x, y;
         float xVector, yVector;
-        float frCoeff; // friction coefficient, i.e. - how much particle will slow over time
-        final int FRAMES_TO_LIVE = 20;
         public int framesTilDeath = FRAMES_TO_LIVE;
         int radius = 1;
         float magnitude;
-        float MAX_VARIABILITY = 0.1f;
-        int FORCE_CONSTANT = 30;
 
         public Particle(float magnitude) {
             float xVectorRatio = rand.nextFloat();
@@ -52,6 +53,9 @@ public class SpittingBass implements IVisual {
 
                 g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), radius * 2, radius * 2);
 //            }
+            xVector *= FRICTION_COEFFICIENT;
+            yVector *= FRICTION_COEFFICIENT;
+
             x += xVector;
             y += yVector;
             framesTilDeath--;
@@ -111,6 +115,10 @@ public class SpittingBass implements IVisual {
             }
 
             p.draw(g);
+        }
+
+        for (Particle p : particlesToKill) {
+            particles.remove(p);
         }
     }
 
