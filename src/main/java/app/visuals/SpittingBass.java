@@ -25,6 +25,8 @@ public class SpittingBass implements IVisual {
         public int framesTilDeath = FRAMES_TO_LIVE;
         int radius = 1;
         float magnitude;
+        float MAX_VARIABILITY = 0.1f;
+        int FORCE_CONSTANT = 30;
 
         public Particle(float magnitude) {
             float xVectorRatio = rand.nextFloat();
@@ -36,17 +38,20 @@ public class SpittingBass implements IVisual {
             x = xVector * (MAX_RADIUS + radius) - radius;
             y = yVector * (MAX_RADIUS + radius) - radius;
 
-            xVector *= magnitude * 50;
-            yVector *= magnitude * 50;
+            float variability = rand.nextFloat() * MAX_VARIABILITY - MAX_VARIABILITY / 2;
+
+            xVector *= magnitude * FORCE_CONSTANT * (1 - variability);
+            yVector *= magnitude * FORCE_CONSTANT * (1 - variability);
 
             this.magnitude = magnitude;
         }
 
         public void draw(Graphics g) {
-            g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
+//            if (rand.nextBoolean()) {
+                g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
 
-            g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), radius * 2, radius * 2);
-
+                g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), radius * 2, radius * 2);
+//            }
             x += xVector;
             y += yVector;
             framesTilDeath--;
