@@ -18,7 +18,7 @@ public class Settings {
 
     // Visualizer
     public static int VISUALIZER_DELAY_TIME_MS = 0;
-    public static int VISUALIZER_PARTICLE_MAGNITUDE = 4; // 1 - 5
+    public static int VISUALIZER_PARTICLE_MAGNITUDE = 5; // 1 - 5
 
     // Audio Files
     private static String[] AUDIO_FILE_NAMES = {
@@ -32,5 +32,5 @@ public class Settings {
             "every_time_we_touch_16.wav",   /* 7  */
             "mind_heist_16.wav"             /* 8  */
     };
-    public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[8];
+    public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[2];
 }

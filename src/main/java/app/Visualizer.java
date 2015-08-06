@@ -23,7 +23,7 @@ public class Visualizer {
         visualEffects.process(fftResults, g);
 
         endTime = System.currentTimeMillis();
-//        System.out.println("Frame Time: " + (endTime - startTime) + " / " + allowedTime + " ms");
+        System.out.println("Frame Time: " + (endTime - startTime) + " / " + allowedTime + " ms");
     }
 
     // TODO: move these

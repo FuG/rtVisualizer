@@ -28,6 +28,7 @@ public class SpittingBass implements IVisual {
         public int framesTilDeath = FRAMES_TO_LIVE;
         int radius = 1;
         float magnitude;
+        float frequency;
 
         public Particle(float frequency, float magnitude) {
             float xVectorRatio = rand.nextFloat();
@@ -45,11 +46,18 @@ public class SpittingBass implements IVisual {
             yVector *= magnitude * FORCE_CONSTANT * (1 - variability);
 
             this.magnitude = magnitude;
+            this.frequency = frequency;
         }
 
         public void draw(Graphics g) {
             if (rand.nextBoolean()) {
-                g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
+                if (frequency == ranges[13]) {
+                    g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
+                } else {
+                    int green = (int) (255 * (frequency / 16384f));
+//                    System.out.println("Green: " + green);
+                    g.setColor(new Color(255, 255 - green, 0, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
+                }
 
                 g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), radius * 2, radius * 2);
             }
@@ -70,7 +78,7 @@ public class SpittingBass implements IVisual {
     @Override
     public void process(double[] fftResults, Graphics g) {
         int rangeBins = ranges.length;
-        double[] rangeMagnitudes = new double[rangeBins];
+        float[] rangeMagnitudes = new float[rangeBins];
 
         int rangeIndex = 0;
         for (int i = 1; i < fftResults.length && rangeIndex < rangeBins; i++) {
@@ -99,9 +107,24 @@ public class SpittingBass implements IVisual {
         setupBackBuffer(Color.BLACK, g);
         setupBassCircle(bassMagnitude, g);
 
-        for (int i = 0; i < bassMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 80; i++) {
+        for (int i = 0; i < bassMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 50; i++) {
             particles.add(new Particle(ranges[13], bassMagnitude));
         }
+
+        for (int i = 14; i < rangeMagnitudes.length; i+=3) {
+            float frequency = ranges[i + 2];
+            float freqMagnitude = (float) (Math.sqrt((rangeMagnitudes[i] + rangeMagnitudes[i + 1] + rangeMagnitudes[i + 2]) / 5));
+
+            if (freqMagnitude > 0.6f) System.out.println("Freq Mag = " + freqMagnitude);
+
+            int particleCount = (int) (freqMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 10);
+//            System.out.println("Particle Count: " + particleCount);
+            for (int j = 0; j < particleCount; j++) {
+                particles.add(new Particle(frequency, freqMagnitude));
+            }
+        }
+
+        System.out.println("Total Frame Particles: " + particles.size());
 
         List<Particle> particlesToKill = new ArrayList<>();
         for (Particle p : particles) {
