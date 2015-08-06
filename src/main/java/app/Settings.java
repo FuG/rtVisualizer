@@ -29,7 +29,8 @@ public class Settings {
             "light_my_fire_16.wav",         /* 4  */
             "came_to_this_16.wav",          /* 5  */
             "dark_horse_16.wav",            /* 6  */
-            "every_time_we_touch_16.wav"    /* 7  */
+            "every_time_we_touch_16.wav",   /* 7  */
+            "mind_heist_16.wav"             /* 8  */
     };
-    public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[6];
+    public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[8];
 }

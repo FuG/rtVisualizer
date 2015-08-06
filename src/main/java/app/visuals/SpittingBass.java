@@ -9,19 +9,19 @@ import java.util.List;
 import java.util.Random;
 
 public class SpittingBass implements IVisual {
-    static double[] ranges = null; // 32 bands
+    static float[] ranges = null; // 32 bands
     static float maxBassVolume = 0;
     final int MAX_RADIUS = 20;
-    float maxBassVolumeEncountered = 1.0f;
+    float maxBassVolumeEncountered = 0.6f;
     Random rand;
 
     List<Particle> particles = new ArrayList<>();
 
     class Particle {
-        final int FRAMES_TO_LIVE = 18;
-        final float FRICTION_COEFFICIENT = 0.95f; // i.e. - how much particle will slow over time
-        final float MAX_VARIABILITY = 0.35f;
-        final int FORCE_CONSTANT = 60;
+        final int FRAMES_TO_LIVE = 20;
+        final float FRICTION_COEFFICIENT = 0.80f; // i.e. - how much particle will slow over time
+        final float MAX_VARIABILITY = 0.30f;
+        final int FORCE_CONSTANT = 70;
 
         float x, y;
         float xVector, yVector;
@@ -29,7 +29,7 @@ public class SpittingBass implements IVisual {
         int radius = 1;
         float magnitude;
 
-        public Particle(float magnitude) {
+        public Particle(float frequency, float magnitude) {
             float xVectorRatio = rand.nextFloat();
             float yVectorRatio = (float) Math.sqrt(1 - xVectorRatio * xVectorRatio);
 
@@ -48,11 +48,11 @@ public class SpittingBass implements IVisual {
         }
 
         public void draw(Graphics g) {
-//            if (rand.nextBoolean()) {
+            if (rand.nextBoolean()) {
                 g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
 
                 g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), radius * 2, radius * 2);
-//            }
+            }
             xVector *= FRICTION_COEFFICIENT;
             yVector *= FRICTION_COEFFICIENT;
 
@@ -99,12 +99,8 @@ public class SpittingBass implements IVisual {
         setupBackBuffer(Color.BLACK, g);
         setupBassCircle(bassMagnitude, g);
 
-//        for (int i = 0; i < rangeMagnitudes.length; i++) {
-//             // TODO: do something with frequency
-//        }
-
         for (int i = 0; i < bassMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 80; i++) {
-            particles.add(new Particle(bassMagnitude));
+            particles.add(new Particle(ranges[13], bassMagnitude));
         }
 
         List<Particle> particlesToKill = new ArrayList<>();
@@ -141,11 +137,11 @@ public class SpittingBass implements IVisual {
 
     private void setupRanges() {
         int binCount = 32;
-        ranges = new double[binCount];
-        ranges[0] = 33.333333333333333;
+        ranges = new float[binCount];
+        ranges[0] = 33.333333333f;
 
         for (int i = 1; i < binCount; i++) {
-            ranges[i] = ranges[i - 1] * 1.221304;
+            ranges[i] = ranges[i - 1] * 1.221304f;
         }
     }
 
