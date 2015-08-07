@@ -11,31 +11,42 @@ import java.util.Random;
 public class SpittingBass implements IVisual {
     static float[] ranges = null; // 32 bands
     static float maxBassVolume = 0;
-    final int MAX_RADIUS = 20;
-    float maxBassVolumeEncountered = 0.6f;
+    final int MAX_RADIUS = 30;
+    float maxBassVolumeEncountered = 0.8f;
     Random rand;
 
     List<Particle> particles = new ArrayList<>();
 
     class Particle {
-        final int FRAMES_TO_LIVE = 20;
-        final float FRICTION_COEFFICIENT = 0.5f; // i.e. - how much particle will slow over time
-        final float MAX_VARIABILITY = 0.30f;
-        final int FORCE_CONSTANT = 200;
+        final int FRAMES_TO_LIVE = 10;
+        final float FRICTION_COEFFICIENT = 0.3f; // inverse; i.e. - how much particle will slow over time
+        final float MAX_VARIABILITY = 0.25f;
+        final int FORCE_CONSTANT = 800;
 
         float x, y;
         float xVector, yVector;
         public int framesTilDeath = FRAMES_TO_LIVE;
-        int radius = 1;
+        float radius = 1;
         float magnitude;
         float frequency;
 
         public Particle(float frequency, float magnitude) {
-            float xVectorRatio = rand.nextFloat();
-            float yVectorRatio = (float) Math.sqrt(1 - xVectorRatio * xVectorRatio);
+            if (frequency == ranges[16]) {
+                radius = 1f;
+            }
 
-            xVector = xVectorRatio * (rand.nextBoolean() == true ? 1 : -1);
-            yVector = yVectorRatio * (rand.nextBoolean() == true ? 1 : -1);
+            float xVectorRatio;
+            float yVectorRatio;
+            if (rand.nextBoolean()) {
+                xVectorRatio = rand.nextFloat();
+                yVectorRatio = (float) Math.sqrt(1 - xVectorRatio * xVectorRatio);
+            } else {
+                yVectorRatio = rand.nextFloat();
+                xVectorRatio = (float) Math.sqrt(1 - yVectorRatio * yVectorRatio);
+            }
+
+            xVector = xVectorRatio * (rand.nextBoolean() ? 1 : -1);
+            yVector = yVectorRatio * (rand.nextBoolean() ? 1 : -1);
 
             x = xVector * (MAX_RADIUS + radius) - radius;
             y = yVector * (MAX_RADIUS + radius) - radius;
@@ -50,8 +61,8 @@ public class SpittingBass implements IVisual {
         }
 
         public void draw(Graphics g) {
-//            if (rand.nextBoolean()) {
-                if (frequency == ranges[13]) {
+            if (framesTilDeath != FRAMES_TO_LIVE) { // suggestion from Tanner Y.
+                if (frequency == ranges[16]) {
                     g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
                 } else {
                     int green = (int) (255 * (frequency / 16384f));
@@ -59,8 +70,8 @@ public class SpittingBass implements IVisual {
                     g.setColor(new Color(255, 255 - green, 0, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
                 }
 
-                g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), radius * 2, radius * 2);
-//            }
+                g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), (int)(radius * 2), (int)(radius * 2));
+            }
             xVector *= FRICTION_COEFFICIENT;
             yVector *= FRICTION_COEFFICIENT;
 
@@ -93,8 +104,8 @@ public class SpittingBass implements IVisual {
 
         float bassMagnitude = 0;
 
-        for (int i = 3; i < 14; i++) { // bass beat ranges
-            bassMagnitude += rangeMagnitudes[i] / 11;
+        for (int i = 3; i < 17; i++) { // bass beat ranges
+            bassMagnitude += rangeMagnitudes[i] / 8;
         }
         // Finding max volume
         if ((float) (Math.pow(2, bassMagnitude) - 1) > maxBassVolume) {
@@ -107,20 +118,21 @@ public class SpittingBass implements IVisual {
         setupBackBuffer(Color.BLACK, g);
         setupBassCircle(bassMagnitude, g);
 
-        for (int i = 0; i < bassMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 40; i++) {
-            particles.add(new Particle(ranges[13], bassMagnitude));
+        for (int i = 0; i < bassMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 80; i++) {
+            particles.add(new Particle(ranges[16], bassMagnitude));
         }
 
-        for (int i = 14; i < rangeMagnitudes.length; i+=3) {
+        for (int i = 17; i < rangeMagnitudes.length; i+=3) {
             float frequency = ranges[i + 2];
             float freqMagnitude = (float) (Math.sqrt((rangeMagnitudes[i] + rangeMagnitudes[i + 1] + rangeMagnitudes[i + 2]) / 5));
 
-            if (freqMagnitude > 0.6f) System.out.println("Freq Mag = " + freqMagnitude);
+            if (freqMagnitude > 0.7f) System.out.println("Freq Mag = " + freqMagnitude);
 
-            int particleCount = (int) (freqMagnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 10);
+            float maxFreqMag = 0.9f;
+            int particleCount = (int) (freqMagnitude / maxFreqMag * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 20);
 //            System.out.println("Particle Count: " + particleCount);
             for (int j = 0; j < particleCount; j++) {
-                particles.add(new Particle(frequency, freqMagnitude));
+                particles.add(new Particle(frequency, freqMagnitude / maxFreqMag));
             }
         }
 
