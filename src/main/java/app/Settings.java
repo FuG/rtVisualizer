@@ -14,10 +14,10 @@ public class Settings {
     // Player
     public static int PLAYER_BUFFER_SIZE = 2; // increase to sync early audio w/ late video
     public static float PLAYER_MASTER_VOLUME = 1.0f;
-    public static long PLAYER_DELAY_TIME_MS = 0; // 17 @ 30 fps
+    public static long PLAYER_DELAY_TIME_MS = 200;
 
     // Visualizer
-    public static int VISUALIZER_DELAY_TIME_MS = 0;
+    public static int VISUALIZER_DELAY_TIME_MS = 200;
     public static int VISUALIZER_PARTICLE_MAGNITUDE = 5; // 1 - 5
 
     // Audio Files

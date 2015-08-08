@@ -15,6 +15,7 @@ public class Mixer implements Runnable {
     AudioFile audioFile;
     double[] leftBuffer, rightBuffer;
     double[] normalStereoBuffer;
+    byte[] stereoPlayBuffer;
 
     FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.UNITARY);
 
@@ -28,6 +29,7 @@ public class Mixer implements Runnable {
         normalStereoBuffer = audioFile.getNormalBufferInstance();
         leftBuffer = audioFile.left.getNormalBufferInstance();
         rightBuffer = audioFile.right.getNormalBufferInstance();
+        stereoPlayBuffer = audioFile.getRawBufferInstance();
         paused = false;
     }
 
@@ -43,26 +45,25 @@ public class Mixer implements Runnable {
     private void process() {
         int bufferSize = (int) (44100 / Settings.FRAMES_PER_SECOND); // samples per frame * 2 bytes (16 bit rate) at 60 fps (single channel)
         double[] dspBuffer = new double[bufferSize];
-        double[] playBuffer = new double[bufferSize * 2]; // to get stereo input
+//        double[] playBuffer = new double[bufferSize * 2]; // to get stereo input
+        byte[] playBuffer = new byte[bufferSize * 4]; // to get stereo input
 
         for (int i = 0; i < leftBuffer.length; i++) {
             if (i % bufferSize == 0) {
-                byte[] finalPlayBuffer = Utility.doublesToBytes(playBuffer, 2, true);
                 double[] fftResults = transform(dspBuffer);
 
                 try {
-                    Thread.sleep((long) (Settings.MILLIS_BETWEEN_FRAMES / 2));
+                    Thread.sleep((long) (Settings.MILLIS_BETWEEN_FRAMES));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
                 fftResultQueue.enqueue(fftResults);
-                player.enqueue(finalPlayBuffer);
+                player.enqueue(playBuffer);
             }
             dspBuffer[i % bufferSize] = leftBuffer[i];
-            int playBufferIndex = (i % bufferSize) * 2;
-            playBuffer[playBufferIndex] = normalStereoBuffer[i * 2];
-            playBuffer[playBufferIndex + 1] = normalStereoBuffer[i * 2 + 1];
+            int playBufferIndex = (i % bufferSize) * 4;
+            System.arraycopy(stereoPlayBuffer, i * 4, playBuffer, playBufferIndex, 4);
         }
     }
 
