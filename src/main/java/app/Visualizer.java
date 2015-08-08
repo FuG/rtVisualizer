@@ -2,7 +2,6 @@ package app;
 
 import app.visuals.IVisual;
 import app.visuals.SpittingBass;
-import app.visuals.VerticalBars;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -17,9 +16,9 @@ public class Visualizer {
     int framesProcessed = 0;
     NumberFormat formatter = new DecimalFormat("#0.00");
 
-    public Visualizer() {
+    public Visualizer(Graphics g) {
 //        visualEffects = new VerticalBars();
-        visualEffects = new SpittingBass();
+        visualEffects = new SpittingBass(g);
     }
 
     public void process(double[] fftResults, Graphics g) {

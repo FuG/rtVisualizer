@@ -50,7 +50,7 @@ public class AppletMain extends Applet implements Runnable {
 //        setupFreqProgression(audioFile);
 
         player = new Player(audioFile.getBaseFormat());
-        visualizer = new Visualizer();
+        visualizer = new Visualizer(backGraphics);
         fftResultQueue = new FFTResultQueue();
         try {
             mixer = new Mixer(player, fftResultQueue, audioFile);
@@ -128,17 +128,13 @@ public class AppletMain extends Applet implements Runnable {
         frameCountResetTime = System.currentTimeMillis();
         while (true) {
             try {
-                long start = System.currentTimeMillis();
-//                setupBackBuffer();
+                long startTime = System.currentTimeMillis();
 
                 double[] fftResults = fftResultQueue.nextFftData();
-
-//                Visualizer.createAllFrequencyVisual(fftResults, backGraphics);
                 visualizer.process(fftResults, backGraphics);
-//                backBuffer.getWidth(this);
 
                 repaint();
-//                System.out.println(System.currentTimeMillis() - startRegulation + " ms");
+//                System.out.println(System.currentTimeMillis() - startTime + " ms");
 //                frameReg.waitForNextFrame();
             } catch (Exception e) {
                 e.printStackTrace();

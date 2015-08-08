@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class ParticleGroup implements Runnable {
+public class ParticleGroup {
     final int RGBA_MAX_VALUE = 255;
     final int FRAMES_TO_LIVE = 10;
     final float FRICTION_COEFFICIENT = 0.3f; // inverse; i.e. - how much particle will slow over time
@@ -21,16 +21,18 @@ public class ParticleGroup implements Runnable {
     Color color;
     int framesTilDeath;
 
+    Graphics g;
     Random rand;
     public Thread myThread;
 
-    public ParticleGroup(float magnitude, Color color) {
+    public ParticleGroup(float magnitude, Color color, Graphics g) {
         particles = new ArrayList<>();
         this.magnitude = magnitude;
         this.color = color;
         radius = 1f;
         framesTilDeath = FRAMES_TO_LIVE;
         rand = new Random();
+        this.g = g;
 
         int particleCount = (int) (magnitude * Settings.VISUALIZER_PARTICLE_MAGNITUDE * 80);
         for (int i = 0; i < particleCount; i++) {
@@ -38,7 +40,7 @@ public class ParticleGroup implements Runnable {
         }
     }
 
-    public synchronized void draw(Graphics g) {
+    public void draw() {
         if (framesTilDeath != FRAMES_TO_LIVE) { // skip first frame
             int alpha = (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * RGBA_MAX_VALUE + 0.5f);
             alpha = alpha > RGBA_MAX_VALUE ? RGBA_MAX_VALUE : alpha; // adjust to max if overflow
@@ -48,30 +50,19 @@ public class ParticleGroup implements Runnable {
                 g.fillOval((int) (Settings.APPLET_WIDTH / 2 + p.x), (int) (Settings.APPLET_HEIGHT / 2 + p.y), (int) (radius * 2), (int) (radius * 2));
             }
         }
-
-        notify();
     }
 
     public boolean isDead() {
         return framesTilDeath <= 0;
     }
 
-    @Override
-    public void run() {
-        while (framesTilDeath > 0) {
-            synchronized (this) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                for (Particle p : particles) {
-                    p.processFrame();
-                }
-
-                framesTilDeath--;
+    public void processFrame() {
+        if (framesTilDeath > 0) {
+            for (Particle p : particles) {
+                p.processFrame();
             }
+
+            framesTilDeath--;
         }
     }
 }
