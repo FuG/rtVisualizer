@@ -6,11 +6,16 @@ import app.visuals.VerticalBars;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 public class Visualizer {
     IVisual visualEffects;
     long startTime, endTime;
     long allowedTime = (long) Settings.MILLIS_BETWEEN_FRAMES;
+    double runningAvgTime = -1;
+    int framesProcessed = 0;
+    NumberFormat formatter = new DecimalFormat("#0.00");
 
     public Visualizer() {
 //        visualEffects = new VerticalBars();
@@ -23,7 +28,19 @@ public class Visualizer {
         visualEffects.process(fftResults, g);
 
         endTime = System.currentTimeMillis();
-        System.out.println("Frame Time: " + (endTime - startTime) + " / " + allowedTime + " ms");
+        long frameTime = endTime - startTime;
+
+        if (runningAvgTime == -1) {
+            runningAvgTime = frameTime;
+        } else {
+            runningAvgTime = runningAvgTime * framesProcessed + frameTime;
+        }
+        framesProcessed++;
+        runningAvgTime /= framesProcessed;
+
+        System.out.print("Avg. Frame Time: " + formatter.format(runningAvgTime) + " ms\r");
+
+//        System.out.println("Frame Time: " + frameTime + " / " + allowedTime + " ms");
     }
 
     // TODO: move these
