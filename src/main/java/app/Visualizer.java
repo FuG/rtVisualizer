@@ -12,8 +12,10 @@ public class Visualizer {
     IVisual visualEffects;
     long startTime, endTime;
     long allowedTime = (long) Settings.MILLIS_BETWEEN_FRAMES;
-    double runningAvgTime = -1;
+    double runningAvgTime = 0;
+    long maxFrameTime = 0;
     int framesProcessed = 0;
+    int maxParticleCount = 0;
     NumberFormat formatter = new DecimalFormat("#0.00");
 
     public Visualizer(Graphics g) {
@@ -24,20 +26,27 @@ public class Visualizer {
     public void process(double[] fftResults, Graphics g) {
         startTime = System.currentTimeMillis();
 
-        visualEffects.process(fftResults, g);
+        int particleCount = visualEffects.process(fftResults, g);
 
         endTime = System.currentTimeMillis();
         long frameTime = endTime - startTime;
 
-        if (runningAvgTime == -1) {
-            runningAvgTime = frameTime;
-        } else {
-            runningAvgTime = runningAvgTime * framesProcessed + frameTime;
+        if (frameTime > maxFrameTime) {
+            maxFrameTime = frameTime;
         }
+
+        runningAvgTime = runningAvgTime * framesProcessed + frameTime;
         framesProcessed++;
         runningAvgTime /= framesProcessed;
 
-        System.out.print("Avg. Frame Time: " + formatter.format(runningAvgTime) + " ms\r");
+        if (particleCount > maxParticleCount) {
+            maxParticleCount = particleCount;
+        }
+
+        System.out.print("Frame Time (Avg: " + formatter.format(runningAvgTime) + " / Max: " + maxFrameTime + ")" +
+                " | Particle Count (Max: " + maxParticleCount + ")" +
+                "\r"
+        );
 
 //        System.out.println("Frame Time: " + frameTime + " / " + allowedTime + " ms");
     }

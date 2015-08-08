@@ -8,13 +8,13 @@ public class Settings {
     public static double FFT_BIN_FREQUENCY = 44100.0 / FFT_BIN_COUNT;
 
     // Applet
-    public static int APPLET_WIDTH = 1536;
+    public static int APPLET_WIDTH = 1000;
     public static int APPLET_HEIGHT = 1000;
 
     // Player
     public static int PLAYER_BUFFER_SIZE = 2; // increase to sync early audio w/ late video
     public static float PLAYER_MASTER_VOLUME = 1.0f;
-    public static long PLAYER_DELAY_TIME_MS = 60; // 17 @ 30 fps
+    public static long PLAYER_DELAY_TIME_MS = 0; // 17 @ 30 fps
 
     // Visualizer
     public static int VISUALIZER_DELAY_TIME_MS = 0;

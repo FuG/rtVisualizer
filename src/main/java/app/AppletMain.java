@@ -121,6 +121,7 @@ public class AppletMain extends Applet implements Runnable {
         getToolkit().sync();
     }
 
+    static int gcFrameCounter = 0;
     @Override
     public void run() {
         frameReg.start();
@@ -134,6 +135,10 @@ public class AppletMain extends Applet implements Runnable {
                 visualizer.process(fftResults, backGraphics);
 
                 repaint();
+//                if (++gcFrameCounter >= Settings.FRAMES_PER_SECOND) {
+//                    gcFrameCounter = 0;
+//                    System.gc();
+//                }
 //                System.out.println(System.currentTimeMillis() - startTime + " ms");
 //                frameReg.waitForNextFrame();
             } catch (Exception e) {

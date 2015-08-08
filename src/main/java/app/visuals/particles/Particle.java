@@ -1,33 +1,40 @@
 package app.visuals.particles;
 
-import app.Settings;
-
-import java.awt.Color;
-import java.awt.Graphics;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Particle {
-    // TODO: remove these 2
     static Random rand = new Random();
-    final int MAX_RADIUS = 30;
-
-    final int FRAMES_TO_LIVE = 10;
-    final float FRICTION_COEFFICIENT = 0.3f; // inverse; i.e. - how much particle will slow over time
-    final float MAX_VARIABILITY = 0.25f;
-    final int FORCE_CONSTANT = 800;
+    static final int SCREEN_CENTER_RADIUS = 30;
+    static final float FRICTION_COEFFICIENT = 0.3f; // inverse; i.e. - how much particle will slow over time
+    static final float MAX_VARIABILITY = 0.25f;
+    static final int FORCE_CONSTANT = 800;
+    static final float RADIUS = 2f;
 
     float x, y;
     float xVector, yVector;
-    public int framesTilDeath = FRAMES_TO_LIVE;
-    float radius = 1;
-    float magnitude;
-    float frequency;
 
-    public Particle(float magnitude) {
-//        if (frequency < 817) {
-//            radius = 1f;
-//        }
+    static int newParticleCount = 0;
+    private final static ConcurrentLinkedQueue<Particle> freeParticles = new ConcurrentLinkedQueue<>();
 
+    public synchronized static Particle createParticle(float magnitude) {
+        Particle p = freeParticles.poll();
+
+        if (p == null) {
+            System.out.println("new Particle(): " + ++newParticleCount);
+            return new Particle(magnitude);
+        }
+
+        p.init(magnitude);
+
+        return p;
+    }
+
+    private Particle(float magnitude) {
+        init(magnitude);
+    }
+
+    public void init(float magnitude) {
         float xVectorRatio;
         float yVectorRatio;
         if (rand.nextBoolean()) {
@@ -41,36 +48,18 @@ public class Particle {
         xVector = xVectorRatio * (rand.nextBoolean() ? 1 : -1);
         yVector = yVectorRatio * (rand.nextBoolean() ? 1 : -1);
 
-        x = xVector * (MAX_RADIUS + radius) - radius;
-        y = yVector * (MAX_RADIUS + radius) - radius;
+        x = xVector * (SCREEN_CENTER_RADIUS + RADIUS) - RADIUS;
+        y = yVector * (SCREEN_CENTER_RADIUS + RADIUS) - RADIUS;
 
         float variability = rand.nextFloat() * MAX_VARIABILITY - MAX_VARIABILITY / 2;
 
         xVector *= magnitude * FORCE_CONSTANT * (1 - variability);
         yVector *= magnitude * FORCE_CONSTANT * (1 - variability);
-
-        this.magnitude = magnitude;
-//        this.frequency = frequency;
     }
 
-//    public void draw(Graphics g) {
-//        if (framesTilDeath != FRAMES_TO_LIVE) { // suggestion from Tanner Y.
-//            if (frequency < 817) {
-//                g.setColor(new Color(255, 255, 255, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
-//            } else {
-//                int green = (int) (255 * (frequency / 16384f));
-//                g.setColor(new Color(255, 255 - green, 0, (int) (((float) framesTilDeath / FRAMES_TO_LIVE) * magnitude * 255)));
-//            }
-//
-//            g.fillOval((int) (Settings.APPLET_WIDTH / 2 + x), (int) (Settings.APPLET_HEIGHT / 2 + y), (int)(radius * 2), (int)(radius * 2));
-//        }
-//        xVector *= FRICTION_COEFFICIENT;
-//        yVector *= FRICTION_COEFFICIENT;
-//
-//        x += xVector;
-//        y += yVector;
-//        framesTilDeath--;
-//    }
+    public void free() {
+        freeParticles.add(this);
+    }
 
     public void processFrame() {
         xVector *= FRICTION_COEFFICIENT;

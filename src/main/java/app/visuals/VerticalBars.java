@@ -14,7 +14,7 @@ public class VerticalBars implements IVisual {
     }
 
     @Override
-    public void process(double[] fftResults, Graphics g) {
+    public int process(double[] fftResults, Graphics g) {
         int rangeBins = ranges.length;
         double[] rangeMagnitudes = new double[rangeBins];
 
@@ -76,6 +76,7 @@ public class VerticalBars implements IVisual {
         }
 
         lastRangedMagnitudes = rangeMagnitudes;
+        return 0;
     }
 
     private void setupRanges() {

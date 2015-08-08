@@ -7,14 +7,16 @@ import app.visuals.particles.ParticleGroup;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 public class SpittingBass implements IVisual {
-    static float[] ranges = null; // 32 bands
-    static float maxBassVolume = 0;
+    static float[] ranges = null;
+    static float[] maxMagnitudes = null;
+    static float[] magnitudes = null;
+    static Color[] colors = null;
     final int MAX_RADIUS = 40;
-    float maxBassVolumeEncountered = 0.8f;
     Random rand;
 
     List<SpittingBassWorker> workers;
@@ -32,8 +34,16 @@ public class SpittingBass implements IVisual {
             this.monitor = monitor;
         }
 
+        public synchronized int getParticleCount() {
+            int particleCount = 0;
+            for (ParticleGroup pg : particleGroups) {
+                particleCount += pg.getParticleCount();
+            }
+            return particleCount;
+        }
+
         public synchronized void create(float magnitude) {
-            ParticleGroup pg = new ParticleGroup(magnitude, color, g);
+            ParticleGroup pg = ParticleGroup.createParticleGroup(magnitude, color, g);
             particleGroups.add(pg);
         }
 
@@ -64,6 +74,7 @@ public class SpittingBass implements IVisual {
 
                     // kill dead particle groups
                     for (ParticleGroup pg : pGroupsToKill) {
+                        pg.free();
                         particleGroups.remove(pg);
                     }
 
@@ -74,22 +85,23 @@ public class SpittingBass implements IVisual {
     }
 
     public SpittingBass(Graphics g) {
+        init();
         rand = new Random();
-        setupRanges();
-        monitor = new Monitor(1);
-
-        SpittingBassWorker worker = new SpittingBassWorker(Color.WHITE, g, monitor);
-        Thread t = new Thread(worker);
-        t.start();
-
+        monitor = new Monitor(ranges.length);
         workers = new ArrayList<>();
-        workers.add(worker);
+
+        for (int i = 0; i < ranges.length; i++) {
+            SpittingBassWorker worker = new SpittingBassWorker(colors[i], g, monitor);
+            workers.add(worker);
+            Thread t = new Thread(worker);
+            t.start();
+        }
     }
 
     @Override
-    public void process(double[] fftResults, Graphics g) {
+    public int process(double[] fftResults, Graphics g) {
         int rangeBins = ranges.length;
-        float[] rangeMagnitudes = new float[rangeBins];
+        magnitudes = new float[rangeBins];
 
         int rangeIndex = 0;
         for (int i = 1; i < fftResults.length && rangeIndex < rangeBins; i++) {
@@ -98,30 +110,40 @@ public class SpittingBass implements IVisual {
             }
 
             if (rangeIndex < rangeBins) {
-                rangeMagnitudes[rangeIndex] += fftResults[i] / Math.sqrt(i); // TODO: make this less expensive
+                magnitudes[rangeIndex] += fftResults[i] / Math.sqrt(i); // TODO: make this less expensive
             }
         }
 
-        float bassMagnitude = 0;
-        bassMagnitude += rangeMagnitudes[0];
-
-        // Finding max volume
-        if ((float) (Math.pow(2, bassMagnitude) - 1) > maxBassVolume) {
-            maxBassVolume = bassMagnitude;
-//            System.out.println("Max Bass Volume: " + maxBassVolume);
+        // Perform magnitude adjustment
+        for (int i = 0; i < magnitudes.length; i++) {
+            // Finding max volume
+//            if ((float) (Math.pow(2, magnitudes[0]) - 1) > maxBassVolume) {
+//                maxBassVolume = magnitudes[0];
+////            System.out.println("Max Bass Volume: " + maxBassVolume);
+//            }
+            maxMagnitudes[i] = magnitudes[i] > maxMagnitudes[i] ? magnitudes[i] : maxMagnitudes[i];
+            magnitudes[i] = (float) (Math.pow(2, magnitudes[i] / maxMagnitudes[i]) - 1); // adjust bass Magnitude
         }
-        maxBassVolumeEncountered = bassMagnitude > maxBassVolumeEncountered ? bassMagnitude : maxBassVolumeEncountered;
-        bassMagnitude = (float) (Math.pow(2, bassMagnitude / maxBassVolumeEncountered) - 1); // adjust bass Magnitude
 
+//        System.out.println(magnitudes[0]);
         setupBackBuffer(Color.BLACK, g);
-        setupBassCircle(bassMagnitude, g);
+        setupBassCircle(magnitudes[0], g);
 
         monitor.reset();
-        SpittingBassWorker worker = workers.get(0);
-        worker.create(bassMagnitude);
-        worker.processFrame();
+        for (int i = 0; i < workers.size(); i++) {
+            SpittingBassWorker worker = workers.get(i);
+            worker.create(magnitudes[i]);
+            worker.processFrame();
+        }
 
         monitor.awaitCompletion();
+
+        int particleCount = 0;
+        for (SpittingBassWorker sbw : workers) {
+            particleCount += sbw.getParticleCount();
+        }
+
+        return particleCount;
     }
 
     private void setupBassCircle(float volume, Graphics g) {
@@ -132,8 +154,17 @@ public class SpittingBass implements IVisual {
         g.fillOval(x, y, MAX_RADIUS * 2, MAX_RADIUS * 2);
     }
 
-    private void setupRanges() {
+    private void init() {
         ranges = new float[] { 100f, 1000f, 4000f, 20000f };
+        maxMagnitudes = new float[ranges.length];
+        Arrays.fill(maxMagnitudes, 5.0f);
+        magnitudes = new float[ranges.length];
+        colors = new Color[] {
+                Color.WHITE,
+                Color.YELLOW,
+                Color.ORANGE,
+                Color.RED
+        };
     }
 
     private void setupBackBuffer(Color color, Graphics g) {
