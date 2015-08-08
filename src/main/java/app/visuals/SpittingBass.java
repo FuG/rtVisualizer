@@ -17,6 +17,23 @@ public class SpittingBass implements IVisual {
 
     List<Particle> particles = new ArrayList<>();
 
+    class ParticleGroup {
+        final int FRAMES_TO_LIVE = 10;
+        final float FRICTION_COEFFICIENT = 0.3f; // inverse; i.e. - how much particle will slow over time
+        final float MAX_VARIABILITY = 0.25f;
+        final int FORCE_CONSTANT = 800;
+
+        List<Particle> particles;
+        Color color;
+        float colorAlpha;
+        int framesTilDeath = FRAMES_TO_LIVE;
+
+        public ParticleGroup(float colorAlpha) {
+            particles = new ArrayList<>();
+            this.colorAlpha = colorAlpha;
+        }
+    }
+
     class Particle {
         final int FRAMES_TO_LIVE = 10;
         final float FRICTION_COEFFICIENT = 0.3f; // inverse; i.e. - how much particle will slow over time
