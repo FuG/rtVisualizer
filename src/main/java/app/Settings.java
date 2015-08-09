@@ -22,15 +22,16 @@ public class Settings {
 
     // Audio Files
     private static String[] AUDIO_FILE_NAMES = {
-            "nara_16.wav",                  /* 0  */
-            "truth_be_known_16.wav",        /* 1  */
-            "gangnam_style_16.wav",         /* 2  */
-            "the_next_episode_16.wav",      /* 3  */
-            "light_my_fire_16.wav",         /* 4  */
-            "came_to_this_16.wav",          /* 5  */
-            "dark_horse_16.wav",            /* 6  */
-            "every_time_we_touch_16.wav",   /* 7  */
-            "mind_heist_16.wav"             /* 8  */
+            "test_audio_prime.wav",               /* 0  */ /* 101hz, 353hz, 557hz, 941hz */
+            "nara_16.wav",                  /* 1  */
+            "truth_be_known_16.wav",        /* 2  */
+            "gangnam_style_16.wav",         /* 3  */
+            "the_next_episode_16.wav",      /* 4  */
+            "light_my_fire_16.wav",         /* 5  */
+            "came_to_this_16.wav",          /* 6  */
+            "dark_horse_16.wav",            /* 7  */
+            "every_time_we_touch_16.wav",   /* 8  */
+            "mind_heist_16.wav"             /* 9  */
     };
     public static String AUDIO_FILE_NAME = AUDIO_FILE_NAMES[2];
 }
