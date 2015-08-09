@@ -135,10 +135,10 @@ public class AppletMain extends Applet implements Runnable {
                 visualizer.process(fftResults, backGraphics);
 
                 repaint();
-                if (++gcFrameCounter >= Settings.FRAMES_PER_SECOND) {
-                    gcFrameCounter = 0;
-                    System.gc();
-                }
+//                if (++gcFrameCounter >= Settings.FRAMES_PER_SECOND) {
+//                    gcFrameCounter = 0;
+//                    System.gc();
+//                }
 //                System.out.println(System.currentTimeMillis() - startTime + " ms");
 //                frameReg.waitForNextFrame();
             } catch (Exception e) {

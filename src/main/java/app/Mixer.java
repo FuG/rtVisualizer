@@ -45,7 +45,6 @@ public class Mixer implements Runnable {
     private void process() {
         int bufferSize = (int) (44100 / Settings.FRAMES_PER_SECOND); // samples per frame * 2 bytes (16 bit rate) at 60 fps (single channel)
         double[] dspBuffer = new double[bufferSize];
-//        double[] playBuffer = new double[bufferSize * 2]; // to get stereo input
         byte[] playBuffer = new byte[bufferSize * 4]; // to get stereo input
 
         for (int i = 0; i < leftBuffer.length; i++) {
